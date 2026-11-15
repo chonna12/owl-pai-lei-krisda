@@ -153,27 +153,33 @@
     }
   }
 
-  // ── 1. Buy Page (Separated Queues by Size & Unrestricted Second-Hand) ─────────
+  // ── 1. Buy Page (Size Grid with First Seller Cost per Size) ─────────
   async function showBuyPage(product) {
     const page = renderTemplate('tpl-buy');
 
+    // Header info
     page.querySelector('#bp-product-name').textContent = product.name;
-    page.querySelector('#bp-product-brand').textContent = product.brand_name || '';
     renderThumb(page.querySelector('#bp-chip-thumb'), product);
-
     page.querySelector('#bp-cancel')?.addEventListener('click', () => window.location.reload());
 
     let selectedCondition = 'new';
     let selectedSize = '';
+    let selectedListing = null;
 
     const tabNew = page.querySelector('#tab-buy-new');
     const tabUsed = page.querySelector('#tab-buy-used');
-    const container = page.querySelector('#bp-listings-container');
+    const sizeGrid = page.querySelector('#bp-size-grid');
+    const selectionPanel = page.querySelector('#bp-selection-panel');
     const emptyBox = page.querySelector('#bp-listings-empty');
     const emptyTitle = page.querySelector('#bp-empty-title');
     const queueTitle = page.querySelector('#bp-queue-title');
     const queueHint = page.querySelector('#bp-queue-hint');
-    const sizeSelect = page.querySelector('#bp-size-select');
+
+    const selSizeEl = page.querySelector('#bp-sel-size');
+    const selBadgeEl = page.querySelector('#bp-sel-badge');
+    const selPriceEl = page.querySelector('#bp-sel-price');
+    const selNotesEl = page.querySelector('#bp-sel-notes');
+    const btnConfirmBuy = page.querySelector('#bp-btn-confirm-buy');
 
     let allListings = [];
     let variants = [];
@@ -195,100 +201,62 @@
       }
     } catch (_) {}
 
-    // Fallback listings if none in database for demo testing
+    // Subtitle: Brand • SKU/Category
+    const sku = variants[0]?.sku || (product.category === 'Shoes' ? '1203A670-201' : product.category || 'Standard');
+    page.querySelector('#bp-product-brand').textContent = `${(product.brand_name || 'BRAND').toUpperCase()} • ${sku}`;
+
+    // Fallback listings matching the user's reference image if database has no active seller offers yet
     if (allListings.length === 0) {
       allListings = [
-        {
-          offer_id: 101,
-          variant_id: 1,
-          size: '8',
-          color: 'Standard',
-          condition: 'new',
-          display_price: 1070.00,
-          condition_notes: 'Brand new in original box (Size 8)',
-        },
-        {
-          offer_id: 102,
-          variant_id: 1,
-          size: '8',
-          color: 'Standard',
-          condition: 'new',
-          display_price: 1150.00,
-          condition_notes: 'Brand new, sealed tags (Size 8)',
-        },
-        {
-          offer_id: 103,
-          variant_id: 2,
-          size: '9',
-          color: 'Standard',
-          condition: 'new',
-          display_price: 1200.00,
-          condition_notes: 'First hand from authorized store (Size 9)',
-        },
-        {
-          offer_id: 104,
-          variant_id: 2,
-          size: '9',
-          color: 'Standard',
-          condition: 'new',
-          display_price: 1250.00,
-          condition_notes: 'Brand new, double boxed (Size 9)',
-        },
-        {
-          offer_id: 201,
-          variant_id: 1,
-          size: '8',
-          color: 'Standard',
-          condition: 'used',
-          display_price: 749.00,
-          defects: 'Light crease on toe box, worn twice with receipt',
-        },
-        {
-          offer_id: 202,
-          variant_id: 2,
-          size: '9',
-          color: 'Standard',
-          condition: 'used',
-          display_price: 680.00,
-          defects: 'Small scuff mark on rear heel',
-        },
-        {
-          offer_id: 203,
-          variant_id: 2,
-          size: '9',
-          color: 'Standard',
-          condition: 'used',
-          display_price: 620.00,
-          defects: 'Worn gently, original insoles included',
-        }
+        { offer_id: 104, variant_id: 4, size: '4', condition: 'new', display_price: 3499.00, condition_notes: 'Brand new in box · First seller' },
+        { offer_id: 105, variant_id: 5, size: '4.5', condition: 'new', display_price: 3549.00, condition_notes: 'Brand new with tags · First seller' },
+        { offer_id: 106, variant_id: 6, size: '5', condition: 'new', display_price: 3555.00, condition_notes: 'Brand new sealed · First seller' },
+        { offer_id: 107, variant_id: 7, size: '5.5', condition: 'new', display_price: 3714.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 108, variant_id: 8, size: '6', condition: 'new', display_price: 5900.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 109, variant_id: 9, size: '6.5', condition: 'new', display_price: 3712.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 110, variant_id: 10, size: '7', condition: 'new', display_price: 3834.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 111, variant_id: 11, size: '7.5', condition: 'new', display_price: 3943.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 112, variant_id: 12, size: '8', condition: 'new', display_price: 3836.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 113, variant_id: 13, size: '8.5', condition: 'new', display_price: 3754.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 114, variant_id: 14, size: '9', condition: 'new', display_price: 2830.00, condition_notes: 'Instant dispatch · Lowest price · First in queue' },
+        { offer_id: 115, variant_id: 15, size: '9.5', condition: 'new', display_price: 3904.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 116, variant_id: 16, size: '10', condition: 'new', display_price: 3904.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 117, variant_id: 17, size: '10.5', condition: 'new', display_price: 3814.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 118, variant_id: 18, size: '11', condition: 'new', display_price: 4377.00, condition_notes: 'Brand new authentic · First seller' },
+        { offer_id: 119, variant_id: 19, size: '11.5', condition: 'new', display_price: 10956.00, condition_notes: 'Rare size · Brand new in box · First seller' },
+        // Second hand fallback
+        { offer_id: 208, variant_id: 8, size: '6', condition: 'used', display_price: 2990.00, defects: 'Slight crease on upper' },
+        { offer_id: 211, variant_id: 11, size: '7.5', condition: 'used', display_price: 2490.00, defects: 'Worn twice, light sole wear' },
+        { offer_id: 214, variant_id: 14, size: '9', condition: 'used', display_price: 1890.00, defects: 'Minor dirt on sole' },
+        { offer_id: 216, variant_id: 16, size: '10', condition: 'used', display_price: 2500.00, defects: 'Insoles replaced' }
       ];
     }
 
-    // Populate Size Selector
+    // Determine complete size list matching the screenshot
+    const standardShoeSizes = ['3', '3.5', '4', '4.5', '5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5'];
     const sizeSet = new Set();
-    variants.forEach(v => { if (v.size) sizeSet.add(v.size); });
-    allListings.forEach(it => { if (it.size) sizeSet.add(it.size); });
-    const availableSizes = Array.from(sizeSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    const isShoe = (product.category === 'Shoes' || (!product.category && variants.some(v => /^\d/.test(v.size))));
 
-    if (sizeSelect) {
-      sizeSelect.innerHTML = '<option value="">All sizes</option>';
-      availableSizes.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s;
-        opt.textContent = `Size ${s}`;
-        sizeSelect.appendChild(opt);
-      });
-
-      sizeSelect.addEventListener('change', () => {
-        selectedSize = sizeSelect.value;
-        renderListings();
-      });
+    if (isShoe) {
+      standardShoeSizes.forEach(s => sizeSet.add(s));
     }
+    variants.forEach(v => { if (v.size) sizeSet.add(String(v.size).replace(/^US\s*/i, '')); });
+    allListings.forEach(it => { if (it.size) sizeSet.add(String(it.size).replace(/^US\s*/i, '')); });
 
-    function renderListings() {
-      container.innerHTML = '';
+    // Numeric sort helper
+    const sortSizes = (list) => list.sort((a, b) => {
+      const numA = parseFloat(a), numB = parseFloat(b);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
+    });
+    const allSizes = sortSizes(Array.from(sizeSet));
 
-      // Filter by condition
+    function renderSizeGrid() {
+      sizeGrid.innerHTML = '';
+      selectionPanel.hidden = true;
+      selectedListing = null;
+
+      // Filter listings by selected condition ('new' or 'used')
       const conditionFiltered = allListings.filter(item => {
         const c = (item.condition || '').toLowerCase();
         return selectedCondition === 'new'
@@ -296,158 +264,155 @@
           : (c === 'used' || c === 'second hand');
       });
 
-      // Filter by size if selected
-      const filtered = selectedSize
-        ? conditionFiltered.filter(item => String(item.size) === String(selectedSize))
-        : conditionFiltered;
-
-      // Update header titles & hints
-      if (selectedCondition === 'new') {
-        if (queueTitle) queueTitle.textContent = 'First-Hand Listings (Queue per Size)';
-        if (queueHint) queueHint.textContent = 'For each size, the first listed item is #1 in line and available to buy.';
-      } else {
-        if (queueTitle) queueTitle.textContent = 'Second-Hand Listings';
-        if (queueHint) queueHint.textContent = 'Browse all curated second-hand finds. Select and buy any available piece in stock.';
+      if (queueTitle) {
+        queueTitle.textContent = selectedCondition === 'new' ? 'Select Size' : 'Select Second-Hand Size';
+      }
+      if (queueHint) {
+        queueHint.textContent = selectedCondition === 'new'
+          ? 'Price shown is cost of seller who listed first'
+          : 'Lowest / first available second-hand price';
       }
 
-      if (filtered.length === 0) {
+      // Map each size to the first seller in queue
+      const clean = s => String(s).toLowerCase().replace(/^us\s*/, '').trim();
+      const sizeOffersMap = {};
+      let minPrice = Infinity;
+      let lowestPriceSize = null;
+
+      allSizes.forEach(sizeVal => {
+        const matching = conditionFiltered.filter(it => clean(it.size) === clean(sizeVal));
+        if (matching.length > 0) {
+          // Sort by earliest offer_id (first in queue)
+          matching.sort((a, b) => Number(a.offer_id || 0) - Number(b.offer_id || 0));
+          const firstOffer = matching[0];
+          sizeOffersMap[sizeVal] = firstOffer;
+          const p = Number(firstOffer.display_price || firstOffer.price || 0);
+          if (p > 0 && p < minPrice) {
+            minPrice = p;
+            lowestPriceSize = sizeVal;
+          }
+        }
+      });
+
+      const hasAnyOffers = Object.keys(sizeOffersMap).length > 0;
+      if (!hasAnyOffers) {
         if (emptyBox) {
           emptyBox.hidden = false;
-          if (emptyTitle) {
-            emptyTitle.textContent = selectedSize
-              ? `No ${selectedCondition === 'new' ? 'One hand' : 'Second hand'} listings for Size ${selectedSize}`
-              : `No ${selectedCondition === 'new' ? 'One hand' : 'Second hand'} listings yet`;
-          }
+          if (emptyTitle) emptyTitle.textContent = `No ${selectedCondition === 'new' ? 'One hand' : 'Second hand'} listings available`;
         }
-        return;
+      } else {
+        if (emptyBox) emptyBox.hidden = true;
       }
 
-      if (emptyBox) emptyBox.hidden = true;
+      let firstClickableCard = null;
+      let firstClickableOffer = null;
+      let firstClickableLabel = '';
 
-      // ── SECOND-HAND RENDERING: No queue lock! Every item is selectable and buyable! ──
-      if (selectedCondition === 'used') {
-        filtered.sort((a, b) => Number(a.display_price || a.price || 0) - Number(b.display_price || b.price || 0));
+      allSizes.forEach(sizeVal => {
+        const card = document.createElement('div');
+        card.className = 'bp-size-card';
 
-        filtered.forEach((item, index) => {
-          const card = document.createElement('div');
-          card.className = 'bp-listing-item bp-listing-top';
+        const displayLabel = isShoe && !/^US\s/i.test(sizeVal) ? `US ${sizeVal}` : sizeVal;
+        const offer = sizeOffersMap[sizeVal];
 
-          const priceDisplay = Number(item.display_price || item.price || 0).toFixed(2);
+        const labelEl = document.createElement('div');
+        labelEl.className = 'bp-size-card-label';
+        labelEl.textContent = displayLabel;
+        card.appendChild(labelEl);
 
-          card.innerHTML = `
-            <div class="bp-item-header">
-              <span class="bp-badge bp-badge-top">
-                🔄 Second Hand · Size ${item.size || 'Standard'} · Available to Buy
-              </span>
-              <span class="bp-item-price">${priceDisplay} THB</span>
-            </div>
+        if (offer) {
+          const priceVal = Number(offer.display_price || offer.price || 0);
+          const priceEl = document.createElement('div');
+          priceEl.className = 'bp-size-card-price';
+          priceEl.textContent = `฿${Math.round(priceVal).toLocaleString('en-US')}`;
+          card.appendChild(priceEl);
 
-            <div class="bp-item-details">
-              <span><strong>Size:</strong> ${item.size || 'Standard'}</span>
-              ${item.color ? `<span><strong>Color:</strong> ${item.color}</span>` : ''}
-              ${item.defects ? `<span class="bp-defect">⚠ ${item.defects}</span>` : ''}
-              ${item.condition_notes ? `<span>${item.condition_notes}</span>` : ''}
-            </div>
+          // Lightning badge on lowest price (like US 9 in reference image)
+          if (priceVal === minPrice) {
+            const badge = document.createElement('div');
+            badge.className = 'bp-size-card-badge';
+            badge.textContent = '⚡';
+            card.appendChild(badge);
+          }
 
-            <button type="button" class="bp-btn-buy" id="btn-buy-used-${index}">
-              Buy This Piece · ${priceDisplay} THB →
-            </button>
-          `;
-
-          card.querySelector(`#btn-buy-used-${index}`)?.addEventListener('click', () => {
-            handlePlaceOrder(product, item);
+          card.addEventListener('click', () => {
+            selectSize(sizeVal, displayLabel, offer, card);
           });
 
-          container.appendChild(card);
-        });
-        return;
-      }
-
-      // ── FIRST-HAND RENDERING: Separated queue per size! ──
-      // Group items by size
-      const sizeGroups = {};
-      filtered.forEach(item => {
-        const s = item.size || 'Standard';
-        if (!sizeGroups[s]) sizeGroups[s] = [];
-        sizeGroups[s].push(item);
-      });
-
-      const sortedSizes = Object.keys(sizeGroups).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-
-      sortedSizes.forEach(sizeName => {
-        const itemsForSize = sizeGroups[sizeName];
-        // Sort earliest listed on top within this size
-        itemsForSize.sort((a, b) => Number(a.offer_id || 0) - Number(b.offer_id || 0));
-
-        // Group header if multiple sizes are shown
-        if (!selectedSize && sortedSizes.length > 1) {
-          const groupHeader = document.createElement('div');
-          groupHeader.className = 'bp-size-group-header';
-          groupHeader.style.cssText = 'font-size: 13px; font-weight: 700; color: var(--brown); margin-top: 14px; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1.5px solid var(--line); display: flex; justify-content: space-between;';
-          groupHeader.innerHTML = `<span>Queue for Size ${sizeName}</span><span style="font-weight: 600; color: var(--muted);">${itemsForSize.length} in queue</span>`;
-          container.appendChild(groupHeader);
+          // Remember for default selection (prefer lowest price)
+          if (sizeVal === lowestPriceSize || !firstClickableCard) {
+            firstClickableCard = card;
+            firstClickableOffer = offer;
+            firstClickableLabel = displayLabel;
+          }
+        } else {
+          // Out of stock size (grayed out with no price, matching US 3 and US 3.5 in screenshot)
+          card.classList.add('is-disabled');
+          const unavail = document.createElement('div');
+          unavail.className = 'bp-size-card-unavail';
+          card.appendChild(unavail);
         }
 
-        itemsForSize.forEach((item, index) => {
-          const isTopForSize = (index === 0);
-          const card = document.createElement('div');
-          card.className = `bp-listing-item ${isTopForSize ? 'bp-listing-top' : 'bp-listing-queued'}`;
-
-          const priceDisplay = Number(item.display_price || item.price || 0).toFixed(2);
-
-          card.innerHTML = `
-            <div class="bp-item-header">
-              <span class="bp-badge ${isTopForSize ? 'bp-badge-top' : 'bp-badge-queued'}">
-                ${isTopForSize
-                  ? `⭐ #1 First in line (Size ${sizeName}) · Available to Buy`
-                  : `🔒 #${index + 1} In Queue (Size ${sizeName})`}
-              </span>
-              <span class="${isTopForSize ? 'bp-item-price' : 'bp-item-price-muted'}">${priceDisplay} THB</span>
-            </div>
-
-            <div class="bp-item-details">
-              <span><strong>Size:</strong> ${item.size || 'Standard'}</span>
-              ${item.color ? `<span><strong>Color:</strong> ${item.color}</span>` : ''}
-              ${item.condition_notes ? `<span>${item.condition_notes}</span>` : ''}
-            </div>
-
-            ${isTopForSize ? `
-              <button type="button" class="bp-btn-buy" id="btn-buy-new-${sizeName}-${index}">
-                Buy Now (Size ${sizeName}) · ${priceDisplay} THB →
-              </button>
-            ` : `
-              <div class="bp-queue-lock-notice">
-                🔒 In queue for Size ${sizeName} — only the top listing for this size can be purchased
-              </div>
-            `}
-          `;
-
-          if (isTopForSize) {
-            card.querySelector(`#btn-buy-new-${sizeName}-${index}`)?.addEventListener('click', () => {
-              handlePlaceOrder(product, item);
-            });
-          }
-
-          container.appendChild(card);
-        });
+        sizeGrid.appendChild(card);
       });
+
+      // Auto-select lowest price or first available size
+      if (firstClickableCard && firstClickableOffer) {
+        selectSize(lowestPriceSize || allSizes[0], firstClickableLabel, firstClickableOffer, firstClickableCard);
+      }
+    }
+
+    function selectSize(sizeVal, displayLabel, offer, cardEl) {
+      selectedSize = sizeVal;
+      selectedListing = offer;
+
+      // Ensure offer has a variant_id
+      if (!offer.variant_id) {
+        const clean = s => String(s).toLowerCase().replace(/^us\s*/, '').trim();
+        const v = variants.find(vr => clean(vr.size) === clean(sizeVal));
+        offer.variant_id = v ? v.variant_id : 1;
+      }
+
+      // Highlight selected card
+      sizeGrid.querySelectorAll('.bp-size-card').forEach(c => c.classList.remove('is-selected'));
+      cardEl.classList.add('is-selected');
+
+      // Populate selection panel
+      const priceVal = Number(offer.display_price || offer.price || 0);
+      const priceFormatted = `฿${Math.round(priceVal).toLocaleString('en-US')}`;
+
+      selSizeEl.textContent = displayLabel;
+      selPriceEl.textContent = `${priceFormatted} THB`;
+      selBadgeEl.textContent = selectedCondition === 'new' ? '⚡ Ready to Buy (#1 in Queue)' : '🔄 Second Hand';
+      selBadgeEl.className = selectedCondition === 'new' ? 'bp-selection-badge' : 'bp-selection-badge sf-tab-active';
+
+      selNotesEl.textContent = offer.condition_notes || (selectedCondition === 'new'
+        ? 'First seller in queue · Verified authentic brand new'
+        : (offer.defects ? `Defect: ${offer.defects}` : 'Curated second-hand piece'));
+
+      btnConfirmBuy.textContent = `Buy ${displayLabel} · ${priceFormatted} →`;
+      btnConfirmBuy.onclick = () => {
+        handlePlaceOrder(product, selectedListing);
+      };
+
+      selectionPanel.hidden = false;
     }
 
     tabNew?.addEventListener('click', () => {
       selectedCondition = 'new';
       tabNew.classList.add('sf-tab-active');
       tabUsed?.classList.remove('sf-tab-active');
-      renderListings();
+      renderSizeGrid();
     });
 
     tabUsed?.addEventListener('click', () => {
       selectedCondition = 'used';
       tabUsed.classList.add('sf-tab-active');
       tabNew?.classList.remove('sf-tab-active');
-      renderListings();
+      renderSizeGrid();
     });
 
-    renderListings();
+    renderSizeGrid();
   }
 
   // ── 2. Order Placement (Only Real DB Orders with Strict Checks) ───────────────

@@ -403,43 +403,52 @@
       </header>
 
       <div class="sf-card bp-container">
-        <div class="sf-product-chip">
-          <div class="sf-chip-thumb" id="bp-chip-thumb"></div>
-          <div class="sf-chip-info">
-            <span class="sf-chip-name" id="bp-product-name"></span>
-            <span class="sf-chip-brand" id="bp-product-brand"></span>
+        <!-- Top product info matching the user's screenshot -->
+        <div class="bp-product-header">
+          <div class="bp-header-thumb" id="bp-chip-thumb"></div>
+          <div class="bp-header-info">
+            <h2 class="bp-header-title" id="bp-product-name"></h2>
+            <p class="bp-header-sub" id="bp-product-brand"></p>
           </div>
         </div>
 
-        <div class="sf-divider"></div>
+        <div class="sf-divider" style="margin: 14px 0 16px;"></div>
 
         <p class="sf-section-label">Condition</p>
-        <div class="sf-tabs">
+        <div class="sf-tabs" style="margin-bottom: 16px;">
           <button type="button" id="tab-buy-new" class="sf-tab sf-tab-active">✨ One hand</button>
           <button type="button" id="tab-buy-used" class="sf-tab">🔄 Second hand</button>
         </div>
 
-        <div id="bp-size-filter-wrap" class="bp-size-wrap" style="margin-top: 14px; margin-bottom: 12px;">
-          <label class="sf-label" for="bp-size-select" style="margin-bottom: 6px;">Filter by Size</label>
-          <div class="sf-select-wrap">
-            <select id="bp-size-select" class="sf-select">
-              <option value="">All sizes</option>
-            </select>
+        <div class="bp-size-grid-header">
+          <span class="bp-size-grid-title" id="bp-queue-title">Select Size</span>
+          <span class="bp-size-grid-hint" id="bp-queue-hint">Price shown is for the first seller in queue</span>
+        </div>
+
+        <!-- 3-Column Size Card Grid (Matching User Screenshot) -->
+        <div id="bp-size-grid" class="bp-size-grid"></div>
+
+        <!-- Selected Size Details & Purchase Action -->
+        <div id="bp-selection-panel" class="bp-selection-panel" hidden>
+          <div class="bp-selection-info">
+            <div class="bp-selection-main">
+              <span class="bp-selection-size" id="bp-sel-size"></span>
+              <span class="bp-selection-badge" id="bp-sel-badge">Ready to Buy</span>
+            </div>
+            <div class="bp-selection-price" id="bp-sel-price"></div>
           </div>
+          <p class="bp-selection-notes" id="bp-sel-notes"></p>
+          <button type="button" id="bp-btn-confirm-buy" class="bp-btn-buy">
+            Buy Now →
+          </button>
         </div>
 
-        <div class="bp-queue-header">
-          <span class="bp-queue-title" id="bp-queue-title">Seller Listings</span>
-          <span class="bp-queue-hint" id="bp-queue-hint">Sorted by queue (first listed on top)</span>
-        </div>
-
-        <div id="bp-listings-container" class="bp-listings-container">
-          <div class="mo-loading">Loading seller listings…</div>
-        </div>
+        <!-- Detailed queue / pieces list container (for multiple second-hand items if needed) -->
+        <div id="bp-listings-container" class="bp-listings-container" style="margin-top: 16px;" hidden></div>
 
         <div id="bp-listings-empty" class="mo-empty bp-empty-box" hidden>
           <span class="bp-empty-icon">🏷️</span>
-          <p class="bp-empty-title" id="bp-empty-title">No listings yet</p>
+          <p class="bp-empty-title" id="bp-empty-title">No listings available</p>
           <p class="bp-empty-sub">Be the first seller to list this item!</p>
         </div>
       </div>
