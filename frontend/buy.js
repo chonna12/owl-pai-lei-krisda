@@ -19,9 +19,15 @@
   }
 
   // ── Storage Helpers for Buyer Orders ─────────────────────────────────────────
+  function getOrdersStorageKey() {
+    const email = window.currentUser?.email;
+    return email ? `${ORDERS_STORAGE_KEY}_${email.trim().toLowerCase()}` : ORDERS_STORAGE_KEY;
+  }
+
   function getLocalOrders() {
     try {
-      const data = localStorage.getItem(ORDERS_STORAGE_KEY);
+      const key = getOrdersStorageKey();
+      const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : [];
     } catch (_) {
       return [];
@@ -30,7 +36,8 @@
 
   function saveLocalOrders(orders) {
     try {
-      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+      const key = getOrdersStorageKey();
+      localStorage.setItem(key, JSON.stringify(orders));
     } catch (_) {}
   }
 

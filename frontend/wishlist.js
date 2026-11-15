@@ -10,9 +10,15 @@
 
   // ── Wishlist State Management ───────────────────────────────────────────────
 
+  function getWishlistKey() {
+    const email = window.currentUser?.email;
+    return email ? `${STORAGE_KEY}_${email.trim().toLowerCase()}` : STORAGE_KEY;
+  }
+
   function getStoredWishlist() {
     try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      const key = getWishlistKey();
+      const data = localStorage.getItem(key);
       return data ? new Set(JSON.parse(data).map(Number)) : new Set();
     } catch (_) {
       return new Set();
@@ -21,18 +27,18 @@
 
   function saveWishlist(set) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(set)));
+      const key = getWishlistKey();
+      localStorage.setItem(key, JSON.stringify(Array.from(set)));
     } catch (_) {}
   }
 
-  const wishlist = getStoredWishlist();
-
   function isWishlisted(productId) {
-    return wishlist.has(Number(productId));
+    return getStoredWishlist().has(Number(productId));
   }
 
   function toggleWishlist(productId) {
     const id = Number(productId);
+    const wishlist = getStoredWishlist();
     const added = !wishlist.has(id);
     if (added) {
       wishlist.add(id);
@@ -159,7 +165,7 @@
     createButton,
     attachToCard,
     scan: scanAndAttach,
-    getAll: () => Array.from(wishlist)
+    getAll: () => Array.from(getStoredWishlist())
   };
 })();
 
