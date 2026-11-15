@@ -28,7 +28,7 @@ async function getCurrentUser() {
       const user = await window.DemoSeller.ensureDemoSession();
       window.currentUser = user;
       return user;
-    } catch (_) {}
+    } catch (_) { }
   }
   try {
     const data = await getJson('/api/me');
@@ -98,7 +98,7 @@ async function readItemPhoto(file) {
 /** Clone a <template> into .page and return the page element for querying. */
 function renderTemplate(templateId) {
   const page = document.querySelector('.page') || document.body;
-  const tpl  = document.getElementById(templateId);
+  const tpl = document.getElementById(templateId);
   page.innerHTML = '';
   page.appendChild(tpl.content.cloneNode(true));
   return page;
@@ -157,7 +157,7 @@ async function showActionModal(product) {
   marketBox.innerHTML = '<div class="apm-loading">Loading listings…</div>';
 
   try {
-    const data     = await getJson(`/api/products/${product.product_id}/market`);
+    const data = await getJson(`/api/products/${product.product_id}/market`);
     const listings = data.listings || [];
 
     if (listings.length > 0) {
@@ -168,15 +168,15 @@ async function showActionModal(product) {
 
         const info = document.createElement('div');
         const cond = document.createElement('span');
-        cond.className   = 'apm-listing-condition';
+        cond.className = 'apm-listing-condition';
         cond.textContent = item.condition === 'new' ? 'First hand' : 'Second hand';
         const size = document.createElement('span');
-        size.className   = 'apm-listing-size';
+        size.className = 'apm-listing-size';
         size.textContent = `Size ${item.size}`;
         info.append(cond, size);
 
         const price = document.createElement('span');
-        price.className   = 'apm-listing-price';
+        price.className = 'apm-listing-price';
         price.textContent = `${item.display_price} THB`;
 
         row.append(info, price);
@@ -184,15 +184,15 @@ async function showActionModal(product) {
 
         if (item.defects) {
           const defect = document.createElement('p');
-          defect.className   = 'apm-listing-defect';
+          defect.className = 'apm-listing-defect';
           defect.textContent = `⚠ ${item.defects}`;
           marketBox.append(defect);
         }
       });
     } else {
       const empty = document.createElement('div');
-      empty.className   = 'apm-empty';
-      empty.innerHTML   = '<span style="font-size:28px;">📭</span><p>No listings yet — be the first to sell!</p>';
+      empty.className = 'apm-empty';
+      empty.innerHTML = '<span style="font-size:28px;">📭</span><p>No listings yet — be the first to sell!</p>';
       marketBox.innerHTML = '';
       marketBox.append(empty);
     }
@@ -234,7 +234,7 @@ async function showSellForm(product) {
   const page = renderTemplate('tpl-sell-form');
 
   // Fill product chip
-  page.querySelector('#sf-product-name').textContent  = product.name;
+  page.querySelector('#sf-product-name').textContent = product.name;
   page.querySelector('#sf-product-brand').textContent = product.brand_name;
 
   // Cancel button
@@ -243,18 +243,18 @@ async function showSellForm(product) {
   // Load variants into <select>
   const select = page.querySelector('#form-variant');
   try {
-    const data     = await getJson(`/api/products/${product.product_id}/variants`);
+    const data = await getJson(`/api/products/${product.product_id}/variants`);
     const variants = data.variants || [];
     if (variants.length) {
       variants.forEach(v => {
         const opt = document.createElement('option');
-        opt.value       = v.variant_id;
+        opt.value = v.variant_id;
         opt.textContent = `${v.size} / ${v.color}`;
         select.append(opt);
       });
     } else {
       const opt = document.createElement('option');
-      opt.value       = '';
+      opt.value = '';
       opt.textContent = 'No variants available';
       select.append(opt);
     }
@@ -264,8 +264,8 @@ async function showSellForm(product) {
 
   // Condition tabs
   let selectedCondition = 'new';
-  const tabNew    = page.querySelector('#tab-new');
-  const tabUsed   = page.querySelector('#tab-used');
+  const tabNew = page.querySelector('#tab-new');
+  const tabUsed = page.querySelector('#tab-used');
   const usedBlock = page.querySelector('#used-fields');
 
   tabNew.addEventListener('click', () => {
@@ -367,7 +367,7 @@ async function showMyOrders() {
   let offers;
   try {
     const data = await sellerRequest('/api/seller/offers');
-    offers = data.offers.map(offer => ({
+    offers = (data.offers || []).map(offer => ({
       ...offer,
       product_name: offer.name,
       price: Number(offer.asking_price),
@@ -375,7 +375,9 @@ async function showMyOrders() {
     }));
   } catch (error) { list.textContent = error.message; return; }
 
-  if (offers.length === 0) {
+  const activeOffers = offers.filter(o => o.status !== 'withdrawn');
+
+  if (activeOffers.length === 0) {
     list.innerHTML = '';
     const empty = document.createElement('div');
     empty.className = 'mo-empty';
@@ -385,13 +387,13 @@ async function showMyOrders() {
   }
 
   list.innerHTML = '';
-  offers.forEach((offer, i) => {
+  activeOffers.forEach((offer, i) => {
     const item = document.createElement('div');
     item.className = 'mo-item';
 
     // Number badge
     const num = document.createElement('span');
-    num.className   = 'mo-num';
+    num.className = 'mo-num';
     num.textContent = i + 1;
 
     // Thumb
@@ -399,8 +401,8 @@ async function showMyOrders() {
     thumb.className = offer.image ? 'mo-thumb' : 'mo-thumb mo-thumb-empty';
     if (offer.image) {
       const img = document.createElement('img');
-      img.src   = offer.image;
-      img.alt   = offer.product_name || '';
+      img.src = offer.image;
+      img.alt = offer.product_name || '';
       img.className = 'item-photo';
       thumb.append(img);
     } else {
@@ -412,23 +414,227 @@ async function showMyOrders() {
     info.className = 'mo-info';
 
     const name = document.createElement('span');
-    name.className   = 'mo-item-name';
+    name.className = 'mo-item-name';
     name.textContent = `#${offer.offer_id} · ${offer.product_name || 'Product'}`;
 
     const cond = document.createElement('span');
-    cond.className   = 'mo-item-cond';
+    cond.className = 'mo-item-cond';
     cond.textContent = (offer.condition === 'new' ? 'First hand' : 'Second hand')
-                     + (offer.price ? ` · ${offer.price.toFixed(2)} THB` : '') + ` · Size ${offer.size} · Qty ${offer.available_quantity}`;
+      + (offer.price ? ` · ${offer.price.toFixed(2)} THB` : '') + ` · Size ${offer.size} · Qty ${offer.available_quantity}`;
 
     const badge = document.createElement('span');
     const status = offer.status || 'pending';
-    badge.className   = `mo-status mo-status-${status}`;
+    badge.className = `mo-status mo-status-${status}`;
     badge.textContent = statusLabel(status);
 
     info.append(name, cond, badge);
-    item.append(num, thumb, info);
+
+    // Actions: Edit & Delete
+    const actions = document.createElement('div');
+    actions.className = 'mo-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'mo-btn mo-btn-edit';
+    editBtn.textContent = 'Edit';
+    editBtn.title = 'Edit price, size, and details';
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEditOfferModal(offer);
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'mo-btn mo-btn-delete';
+    delBtn.textContent = 'Delete';
+    delBtn.title = 'Delete or withdraw this listing';
+    delBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const confirmed = confirm(`Are you sure you want to delete this listing (#${offer.offer_id} · ${offer.product_name || 'Product'})?`);
+      if (!confirmed) return;
+      try {
+        await sellerRequest(`/api/seller/offers/${offer.offer_id}/withdraw`, { method: 'POST' });
+        alert('Product listing deleted successfully.');
+        await showMyOrders();
+      } catch (err) {
+        alert(err.message || 'Failed to delete listing.');
+      }
+    });
+
+    actions.append(editBtn, delBtn);
+    item.append(num, thumb, info, actions);
     list.append(item);
   });
+}
+
+window.showMyOrders = showMyOrders;
+
+async function openEditOfferModal(offer) {
+  const modal = $('edit-offer-modal');
+  if (!modal) return;
+
+  const titleEl = $('edit-product-name');
+  const variantSelect = $('edit-offer-variant');
+  const priceInput = $('edit-offer-price');
+  const qtyInput = $('edit-offer-quantity');
+  const defectsGroup = $('edit-defects-group');
+  const defectsInput = $('edit-offer-defects');
+  const notesInput = $('edit-offer-notes');
+  const errorEl = $('edit-offer-error');
+  const form = $('edit-offer-form');
+
+  titleEl.textContent = `#${offer.offer_id} · ${offer.product_name || 'Product'}`;
+  priceInput.value = offer.asking_price != null ? Number(offer.asking_price).toFixed(2) : (offer.price ? Number(offer.price).toFixed(2) : '');
+  qtyInput.value = offer.available_quantity || 1;
+  notesInput.value = offer.condition_notes || '';
+  errorEl.hidden = true;
+  errorEl.textContent = '';
+
+  if (offer.condition === 'used') {
+    defectsGroup.hidden = false;
+    defectsInput.required = true;
+    defectsInput.value = offer.defects || '';
+    qtyInput.readOnly = true;
+  } else {
+    defectsGroup.hidden = true;
+    defectsInput.required = false;
+    defectsInput.value = offer.defects || '';
+    qtyInput.readOnly = false;
+  }
+
+  // Find product variants
+  variantSelect.innerHTML = '<option value="">Loading sizes…</option>';
+  try {
+    let variants = [];
+    let productId = offer.product_id;
+    if (!productId) {
+      // Find product by name from catalog
+      const prodRes = await getJson('/api/products');
+      const found = (prodRes.products || []).find(p => p.name === offer.product_name || p.name === offer.name);
+      if (found) productId = found.product_id;
+    }
+    if (productId) {
+      const data = await getJson(`/api/products/${productId}/variants`);
+      variants = data.variants || [];
+    }
+    variantSelect.innerHTML = '';
+    if (variants.length) {
+      variants.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.variant_id;
+        opt.textContent = `${v.size} / ${v.color}`;
+        if (String(v.variant_id) === String(offer.variant_id)) {
+          opt.selected = true;
+        }
+        variantSelect.append(opt);
+      });
+    } else {
+      const opt = document.createElement('option');
+      opt.value = offer.variant_id;
+      opt.textContent = `${offer.size} / ${offer.color || 'Default'}`;
+      opt.selected = true;
+      variantSelect.append(opt);
+    }
+  } catch (_) {
+    variantSelect.innerHTML = '';
+    const opt = document.createElement('option');
+    opt.value = offer.variant_id;
+    opt.textContent = `${offer.size} / ${offer.color || 'Default'}`;
+    opt.selected = true;
+    variantSelect.append(opt);
+  }
+
+  const closeModal = () => modal.classList.remove('is-open');
+  const closeBtn = $('edit-modal-close');
+  const cancelBtn = $('edit-offer-cancel');
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    errorEl.hidden = true;
+    errorEl.textContent = '';
+
+    const newPrice = parseFloat(priceInput.value);
+    const newVariantId = variantSelect.value;
+    const newQty = parseInt(qtyInput.value, 10);
+    const newDefects = defectsInput.value.trim();
+    const newNotes = notesInput.value.trim();
+
+    if (!Number.isFinite(newPrice) || newPrice <= 0) {
+      errorEl.textContent = 'Please enter a valid price.';
+      errorEl.hidden = false;
+      return;
+    }
+    if (!newVariantId) {
+      errorEl.textContent = 'Please select a size/variant.';
+      errorEl.hidden = false;
+      return;
+    }
+    if (offer.condition === 'used' && !newDefects) {
+      errorEl.textContent = 'Please specify item defects for second-hand items.';
+      errorEl.hidden = false;
+      return;
+    }
+
+    const saveBtn = $('edit-offer-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
+    try {
+      const isPending = offer.status === 'pending';
+      const variantChanged = String(newVariantId) !== String(offer.variant_id);
+
+      // If pending and variant didn't change, try PATCH directly
+      if (isPending && !variantChanged) {
+        try {
+          await sellerRequest(`/api/seller/offers/${offer.offer_id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              price: newPrice,
+              quantity: newQty || 1,
+              defects: newDefects,
+              notes: newNotes,
+              photos: offer.photos || []
+            })
+          });
+          closeModal();
+          alert('Product listing updated successfully.');
+          await showMyOrders();
+          return;
+        } catch (patchErr) {
+          console.warn('PATCH failed, falling back to withdraw & recreate:', patchErr);
+        }
+      }
+
+      // If variant changed or offer is not pending, withdraw old offer and submit new offer
+      await sellerRequest(`/api/seller/offers/${offer.offer_id}/withdraw`, { method: 'POST' });
+      await sellerRequest('/api/seller/offers', {
+        method: 'POST',
+        body: JSON.stringify({
+          variantId: Number(newVariantId),
+          condition: offer.condition,
+          price: newPrice,
+          quantity: newQty || 1,
+          defects: newDefects,
+          notes: newNotes,
+          photos: offer.photos || []
+        })
+      });
+
+      closeModal();
+      alert('Product listing updated successfully.');
+      await showMyOrders();
+    } catch (err) {
+      errorEl.textContent = err.message || 'Failed to update offer.';
+      errorEl.hidden = false;
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save changes';
+    }
+  };
+
+  modal.classList.add('is-open');
 }
 
 function statusLabel(status) {
@@ -436,15 +642,15 @@ function statusLabel(status) {
     case 'approved': return '✅ Approved';
     case 'rejected': return '❌ Rejected';
     case 'withdrawn': return 'Withdrawn';
-    default:         return 'Pending approval';
+    default: return 'Pending approval';
   }
 }
 
 // ─── Product cards (home grid) ────────────────────────────────────────────────
 function makeCard(product) {
-  const li   = document.createElement('li');
+  const li = document.createElement('li');
   const card = document.createElement('button');
-  card.type      = 'button';
+  card.type = 'button';
   card.className = 'card';
   card.dataset.productId = String(product.product_id);
   card.addEventListener('click', () => showActionModal(product));
@@ -453,7 +659,7 @@ function makeCard(product) {
   media.className = 'card-media tint-' + (product.product_id % 5);
   media.dataset.productId = String(product.product_id);
   const label = document.createElement('span');
-  label.className   = 'card-label';
+  label.className = 'card-label';
   label.textContent = `${product.category} / ${String(product.product_id).padStart(3, '0')}`;
   media.append(label);
   fillMedia(media, product);
@@ -463,13 +669,13 @@ function makeCard(product) {
     media.append(window.Wishlist.createButton(product.product_id));
   }
 
-  const body  = document.createElement('div');
+  const body = document.createElement('div');
   body.className = 'card-body';
   const brand = document.createElement('span');
-  brand.className   = 'card-brand';
+  brand.className = 'card-brand';
   brand.textContent = product.brand_name;
-  const name  = document.createElement('span');
-  name.className   = 'card-name';
+  const name = document.createElement('span');
+  name.className = 'card-name';
   name.textContent = product.name;
   body.append(brand, name);
 
@@ -527,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'cursor:pointer;transition:background .15s',
     ].join(';');
     logoutBtn.onmouseover = () => logoutBtn.style.background = '#f5ece0';
-    logoutBtn.onmouseout  = () => logoutBtn.style.background = 'none';
+    logoutBtn.onmouseout = () => logoutBtn.style.background = 'none';
     logoutBtn.addEventListener('click', handleLogout);
     userDiv.append(logoutBtn);
   }

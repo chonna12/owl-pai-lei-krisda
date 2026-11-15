@@ -44,7 +44,7 @@
 
   function updateHeaderUser(user) {
     window.currentUser = user;
-    const nameEl   = $('demo-status');
+    const nameEl = $('demo-status');
     const avatarEl = document.querySelector('.avatar');
 
     if (nameEl && user.name) {
@@ -94,9 +94,9 @@
   // ── Tab switcher ──────────────────────────────────────────────────────────────
 
   function initTabs() {
-    const tabLogin    = $('tab-login');
+    const tabLogin = $('tab-login');
     const tabRegister = $('tab-register');
-    const panelLogin    = $('panel-login');
+    const panelLogin = $('panel-login');
     const panelRegister = $('panel-register');
     if (!tabLogin || !tabRegister) return;
 
@@ -105,7 +105,7 @@
       tabLogin.setAttribute('aria-selected', 'true');
       tabRegister.classList.remove('login-tab-active');
       tabRegister.setAttribute('aria-selected', 'false');
-      panelLogin.hidden    = false;
+      panelLogin.hidden = false;
       panelRegister.hidden = true;
       setError('login-error', '');
       setError('register-error', '');
@@ -118,7 +118,7 @@
       tabLogin.classList.remove('login-tab-active');
       tabLogin.setAttribute('aria-selected', 'false');
       panelRegister.hidden = false;
-      panelLogin.hidden    = true;
+      panelLogin.hidden = true;
       setError('login-error', '');
       setError('register-error', '');
       setSuccess('register-success', '');
@@ -135,8 +135,8 @@
       e.preventDefault();
       setError('login-error', '');
 
-      const email    = ($('login-email')    || {}).value?.trim() ?? '';
-      const password = ($('login-password') || {}).value         ?? '';
+      const email = ($('login-email') || {}).value?.trim() ?? '';
+      const password = ($('login-password') || {}).value ?? '';
 
       if (!email || !password) {
         setError('login-error', 'Please enter your email and password.');
@@ -145,7 +145,7 @@
 
       setBusy('login-submit', true, 'Sign in');
       try {
-        const res  = await fetch('/api/login', {
+        const res = await fetch('/api/login', {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
@@ -178,14 +178,23 @@
       setError('register-error', '');
       setSuccess('register-success', '');
 
-      const fullName  = ($('reg-name')     || {}).value?.trim() ?? '';
-      const email     = ($('reg-email')    || {}).value?.trim() ?? '';
-      const password  = ($('reg-password') || {}).value         ?? '';
-      const confirm   = ($('reg-confirm')  || {}).value         ?? '';
+      const fullName = ($('reg-name') || {}).value?.trim() ?? '';
+      const email = ($('reg-email') || {}).value?.trim() ?? '';
+      const password = ($('reg-password') || {}).value ?? '';
+      const confirm = ($('reg-confirm') || {}).value ?? '';
+      const phone = ($('reg-phone') || {}).value?.trim() ?? '';
+      const addressLine = ($('reg-address-line') || {}).value?.trim() ?? '';
+      const district = ($('reg-district') || {}).value?.trim() ?? '';
+      const province = ($('reg-province') || {}).value?.trim() ?? '';
+      const postalCode = ($('reg-postal-code') || {}).value?.trim() ?? '';
 
       // Client-side validation
       if (!fullName || !email || !password || !confirm) {
-        setError('register-error', 'Please fill in all fields.');
+        setError('register-error', 'Please fill in all account fields.');
+        return;
+      }
+      if (!phone || !addressLine || !district || !province || !postalCode) {
+        setError('register-error', 'Home address is required (phone, address line, district, province, postal code).');
         return;
       }
       if (password.length < 8) {
@@ -199,7 +208,7 @@
 
       setBusy('register-submit', true, 'Create account');
       try {
-        const res  = await fetch('/api/register', {
+        const res = await fetch('/api/register', {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
@@ -213,8 +222,31 @@
           return;
         }
 
+        // Save home address to database using existing POST /api/addresses endpoint
+        try {
+          const addrRes = await fetch('/api/addresses', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipientName: fullName,
+              phone,
+              addressLine,
+              district,
+              province,
+              postalCode
+            })
+          });
+          if (!addrRes.ok) {
+            const addrErr = await addrRes.json().catch(() => ({}));
+            console.warn('Home address save notice:', addrErr.error || 'Failed to save address');
+          }
+        } catch (addrErr) {
+          console.warn('Home address network error:', addrErr);
+        }
+
         // Auto-login after successful registration and briefly show confirmation.
-        onLoginSuccess(data.user || {}, 'Account created successfully. Signing you in…');
+        onLoginSuccess(data.user || {}, 'Account created successfully with home address. Signing you in…');
       } catch (_) {
         setError('register-error', 'Network error — check that the backend is running.');
       } finally {
@@ -236,7 +268,7 @@
         if (!window.DemoSeller && user.email === 'seller1@owl.test') {
           try {
             await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
-          } catch (_) {}
+          } catch (_) { }
           window.currentUser = null;
           return false; // Show login/register screen for real users
         }
@@ -262,7 +294,7 @@
         document.head.appendChild(script);
         return;
       }
-    } catch (_) {}
+    } catch (_) { }
 
     initTabs();
     initLoginForm();

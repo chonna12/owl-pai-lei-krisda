@@ -1362,6 +1362,43 @@ a {
   color: #842029;
 }
 
+.mo-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.mo-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .15s ease;
+}
+
+.mo-btn-edit {
+  background: var(--hero);
+  color: var(--accent);
+  border-color: #caa280;
+}
+
+.mo-btn-edit:hover {
+  background: #ecd9c6;
+}
+
+.mo-btn-delete {
+  background: #fdf2f2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.mo-btn-delete:hover {
+  background: #fee2e2;
+}
+
 /* Avatar clickable */
 .avatar {
   cursor: pointer;
@@ -1501,9 +1538,11 @@ a {
 .login-card {
   background: var(--white);
   border-radius: 20px;
-  padding: 40px 36px;
+  padding: 36px 32px;
   width: 90%;
-  max-width: 380px;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
   border: 1px solid var(--line);
   box-shadow: 0 12px 48px rgba(90, 56, 38, .14);
   text-align: center;
