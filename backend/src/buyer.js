@@ -1,4 +1,3 @@
-import { hashPassword } from './security.js';
 
 const isId = value => /^[1-9][0-9]{0,17}$/.test(String(value));
 const clean = value => typeof value === 'string' ? value.trim() : '';
@@ -13,21 +12,6 @@ const addressFields = {
 };
 const addressColumns = 'address_id,recipient_name,phone,address_line,district,province,postal_code,is_default';
 
-async function transaction(pool, work) {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const result = await work(client);
-    await client.query('COMMIT');
-    return result;
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
 export function mountBuyerRoutes(app, pool, account) {
   const buyer = [account, async (req, res, next) => {
     const { rows } = await pool.query("SELECT has_role($1,'buyer') AS allowed", [req.seller.user_id]);
@@ -35,31 +19,6 @@ export function mountBuyerRoutes(app, pool, account) {
     next();
   }];
   const userId = req => req.seller.user_id;
-
-  app.post('/api/register', async (req, res) => {
-    const b = req.body || {};
-    const fullName = clean(b.fullName ?? b.name);
-    const email = clean(b.email).toLowerCase();
-    const password = b.password;
-    if (!fullName || fullName.length > 100 || email.length > 254 ||
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-        typeof password !== 'string' || password.length < 8 || password.length > 200) {
-      return fail(res, 400, 'Enter a name, valid email and password of 8 to 200 characters');
-    }
-    try {
-      const user = await transaction(pool, async client => {
-        const { rows } = await client.query(
-          'INSERT INTO users(full_name,email,password_hash) VALUES($1,$2,$3) RETURNING user_id,full_name,email',
-          [fullName, email, hashPassword(password)]
-        );
-        return rows[0];
-      });
-      res.status(201).json({ user: { id: user.user_id, name: user.full_name, email: user.email, canSell: false } });
-    } catch (error) {
-      if (error.code === '23505') return fail(res, 409, 'Email already registered');
-      throw error;
-    }
-  });
 
   app.get('/api/wishlist', buyer, async (req, res) => {
     const { rows } = await pool.query(`
@@ -128,8 +87,7 @@ export function mountBuyerRoutes(app, pool, account) {
       SELECT b.*,CASE WHEN o.cancellation_status IS NOT NULL THEN o.order_id END AS cancellation_request_id,o.cancellation_status,
              s.tracking_number,s.carrier,s.status AS shipment_status
       FROM buyer_orders b JOIN orders o USING(order_id)
-      LEFT JOIN order_items i USING(order_id)
-      LEFT JOIN shipments s ON s.order_item_id=i.order_item_id AND s.leg='hub_to_buyer'
+      LEFT JOIN shipments s ON s.order_id=o.order_id AND s.leg='hub_to_buyer'
       WHERE b.buyer_id=$1 ORDER BY b.order_id DESC
     `, [userId(req)]);
     res.json({ orders: rows, demoPayment: process.env.DEMO_PAYMENT === 'true' });

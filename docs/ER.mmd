@@ -74,21 +74,6 @@ erDiagram
     boolean is_read
     timestamp_with_time_zone created_at
   }
-  order_items {
-    bigint order_item_id PK
-    bigint order_id FK
-    bigint offer_id FK
-    bigint seller_id FK
-    bigint variant_id FK
-    character_varying_150_ product_name_snapshot
-    character_varying_30_ size_snapshot
-    character_varying_50_ color_snapshot
-    character_varying_10_ condition_snapshot
-    text defects_snapshot
-    smallint quantity
-    numeric_12_2_ unit_price
-    character_varying_30_ fulfillment_status
-  }
   orders {
     bigint order_id PK
     bigint buyer_id FK
@@ -112,6 +97,17 @@ erDiagram
     character_varying_100_ shipping_district
     character_varying_100_ shipping_province
     character_varying_15_ shipping_postal_code
+    bigint offer_id FK
+    bigint seller_id FK
+    bigint variant_id FK
+    character_varying_150_ product_name_snapshot
+    character_varying_30_ size_snapshot
+    character_varying_50_ color_snapshot
+    character_varying_10_ condition_snapshot
+    text defects_snapshot
+    smallint quantity
+    numeric_12_2_ unit_price
+    character_varying_30_ fulfillment_status
   }
   payments {
     bigint payment_id PK
@@ -124,8 +120,8 @@ erDiagram
     timestamp_with_time_zone paid_at
   }
   payout_items {
-    bigint payout_id PK
-    bigint order_item_id PK
+    bigint payout_id PK, FK
+    bigint order_id PK, FK
     numeric_12_2_ amount
   }
   payouts {
@@ -165,18 +161,12 @@ erDiagram
   }
   qc_inspections {
     bigint inspection_id PK
-    bigint order_item_id FK
+    bigint order_id FK
     bigint inspector_id FK
     character_varying_10_ result
     smallint seller_score
     text notes
     timestamp_with_time_zone inspected_at
-  }
-  queue_entries {
-    bigint offer_id PK
-    bigint group_id FK
-    bigint position
-    smallint skips_remaining
   }
   queue_groups {
     bigint group_id PK
@@ -225,6 +215,9 @@ erDiagram
     bigint reviewed_by FK
     text review_reason
     timestamp_with_time_zone reviewed_at
+    bigint queue_group_id FK
+    bigint queue_position
+    smallint skips_remaining
   }
   sessions {
     bigint session_id PK
@@ -235,7 +228,7 @@ erDiagram
   }
   shipments {
     bigint shipment_id PK
-    bigint order_item_id FK
+    bigint order_id FK
     character_varying_20_ leg
     character_varying_80_ carrier
     character_varying_120_ tracking_number
@@ -275,67 +268,65 @@ erDiagram
     timestamp_with_time_zone seller_since
   }
   wishlist_items {
-    bigint user_id PK
-    bigint product_id PK
+    bigint user_id PK, FK
+    bigint product_id PK, FK
     timestamp_with_time_zone added_at
   }
-  users ||--o{ activity_logs : "actor_id"
-  orders ||--o{ activity_logs : "order_id"
-  shipments ||--o{ activity_logs : "shipment_id"
-  queue_groups ||--o{ activity_logs : "group_id"
-  seller_offers ||--o{ activity_logs : "offer_id"
-  refunds ||--o{ activity_logs : "refund_id"
-  payouts ||--o{ activity_logs : "payout_id"
-  users ||--o{ activity_logs : "verification_id"
-  seller_charges ||--o{ activity_logs : "charge_id"
+  users |o--o{ users : "verification_reviewer_id"
+  users ||--o{ sessions : "user_id"
   users ||--o{ addresses : "user_id"
-  products ||--o{ assets : "product_id"
-  seller_offers ||--o{ assets : "offer_id"
-  qc_inspections ||--o{ assets : "inspection_id"
+  users ||--o{ products : "created_by"
+  products ||--o{ product_variants : "product_id"
+  seller_offers |o--o{ queue_groups : "active_offer_id"
+  users ||--o{ seller_offers : "seller_id"
+  product_variants ||--o{ seller_offers : "variant_id"
+  users |o--o{ seller_offers : "reviewed_by"
+  product_variants ||--o{ queue_groups : "variant_id"
+  users ||--o{ wishlist_items : "user_id"
+  products ||--o{ wishlist_items : "product_id"
+  users ||--o{ coupons : "created_by"
+  users |o--o{ orders : "cancellation_reviewed_by"
+  users ||--o{ orders : "buyer_id"
+  coupons |o--o{ orders : "coupon_id"
   coupons ||--o{ coupon_redemptions : "coupon_id"
   users ||--o{ coupon_redemptions : "user_id"
-  orders ||--o{ coupon_redemptions : "order_id"
-  users ||--o{ coupons : "created_by"
-  users ||--o{ notifications : "user_id"
-  orders ||--o{ notifications : "order_id"
-  seller_offers ||--o{ notifications : "offer_id"
-  orders ||--o{ order_items : "order_id"
-  seller_offers ||--o{ order_items : "offer_id"
-  users ||--o{ order_items : "seller_id"
-  product_variants ||--o{ order_items : "variant_id"
-  users ||--o{ orders : "buyer_id"
-  coupons ||--o{ orders : "coupon_id"
-  users ||--o{ orders : "cancellation_reviewed_by"
+  orders ||--o| coupon_redemptions : "order_id"
   orders ||--o{ payments : "order_id"
-  users ||--o{ payments : "verified_by"
-  payouts ||--o{ payout_items : "payout_id"
-  order_items ||--o{ payout_items : "order_item_id"
+  users |o--o{ payments : "verified_by"
+  users ||--o{ qc_inspections : "inspector_id"
+  users ||--o{ shipments : "created_by"
+  users |o--o{ refunds : "approved_by"
+  orders ||--o| refunds : "order_id"
+  payments ||--o| refunds : "payment_id"
+  users |o--o{ refunds : "paid_by"
+  users ||--o{ seller_charges : "seller_id"
+  shipments ||--o| seller_charges : "shipment_id"
+  users ||--o{ seller_charges : "recorded_by"
   users ||--o{ payouts : "seller_id"
   users ||--o{ payouts : "bank_account_id"
   users ||--o{ payouts : "created_by"
-  users ||--o{ payouts : "approved_by"
-  users ||--o{ payouts : "paid_by"
-  products ||--o{ product_variants : "product_id"
-  users ||--o{ products : "created_by"
-  order_items ||--o{ qc_inspections : "order_item_id"
-  users ||--o{ qc_inspections : "inspector_id"
-  seller_offers ||--o{ queue_entries : "offer_id"
-  queue_groups ||--o{ queue_entries : "group_id"
-  product_variants ||--o{ queue_groups : "variant_id"
-  seller_offers ||--o{ queue_groups : "active_offer_id"
-  orders ||--o{ refunds : "order_id"
-  payments ||--o{ refunds : "payment_id"
-  users ||--o{ refunds : "approved_by"
-  users ||--o{ refunds : "paid_by"
-  users ||--o{ seller_charges : "seller_id"
-  shipments ||--o{ seller_charges : "shipment_id"
-  users ||--o{ seller_charges : "recorded_by"
-  users ||--o{ seller_offers : "seller_id"
-  product_variants ||--o{ seller_offers : "variant_id"
-  users ||--o{ seller_offers : "reviewed_by"
-  users ||--o{ sessions : "user_id"
-  order_items ||--o{ shipments : "order_item_id"
-  users ||--o{ shipments : "created_by"
-  users ||--o{ users : "verification_reviewer_id"
-  users ||--o{ wishlist_items : "user_id"
-  products ||--o{ wishlist_items : "product_id"
+  users |o--o{ payouts : "approved_by"
+  users |o--o{ payouts : "paid_by"
+  payouts ||--o{ payout_items : "payout_id"
+  users ||--o{ notifications : "user_id"
+  orders |o--o{ notifications : "order_id"
+  seller_offers |o--o{ notifications : "offer_id"
+  products |o--o{ assets : "product_id"
+  seller_offers |o--o{ assets : "offer_id"
+  qc_inspections |o--o{ assets : "inspection_id"
+  users |o--o{ activity_logs : "actor_id"
+  orders |o--o{ activity_logs : "order_id"
+  shipments |o--o{ activity_logs : "shipment_id"
+  queue_groups |o--o{ activity_logs : "group_id"
+  seller_offers |o--o{ activity_logs : "offer_id"
+  refunds |o--o{ activity_logs : "refund_id"
+  payouts |o--o{ activity_logs : "payout_id"
+  users |o--o{ activity_logs : "verification_id"
+  seller_charges |o--o{ activity_logs : "charge_id"
+  seller_offers ||--o{ orders : "offer_id"
+  users ||--o{ orders : "seller_id"
+  product_variants ||--o{ orders : "variant_id"
+  queue_groups |o--o{ seller_offers : "queue_group_id"
+  orders ||--o| qc_inspections : "order_id"
+  orders ||--o{ shipments : "order_id"
+  orders ||--o| payout_items : "order_id"

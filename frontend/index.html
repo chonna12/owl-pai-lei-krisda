@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Owl Pai Lei</title>
-  <link rel="stylesheet" href="styles.css?v=manage-1">
+  <link rel="stylesheet" href="styles.css?v=buy-grid-list-1">
 </head>
 
 <body>
@@ -258,8 +258,12 @@
           <div class="sf-field">
             <label class="sf-label" for="form-variant">Variant / Size</label>
             <div class="sf-select-wrap">
-              <select id="form-variant" class="sf-select" required></select>
+              <select id="form-variant" class="sf-select" required disabled>
+                <option value="">Loading sizes…</option>
+              </select>
             </div>
+            <p id="sf-variant-status" class="sf-variant-status" role="status">Loading available sizes…</p>
+            <button type="button" id="sf-retry-variants" class="sf-cancel-btn" hidden>Retry loading sizes</button>
           </div>
 
           <div class="sf-field">
@@ -766,14 +770,13 @@
     </div>
   </div>
 
-  <script src="demoseller.js" onerror="this.remove()"></script>
   <script src="wishlist.js?v=wishlist-1"></script>
-  <script src="login.js?v=login-8"></script>
-  <script src="approve.js?v=login-8"></script>
+  <script src="login.js?v=cleanup-1"></script>
+  <script src="approve.js?v=cleanup-1"></script>
   <script src="catalog.js?v=catalog-1"></script>
-  <script src="manage.js?v=manage-1"></script>
-  <script src="buy.js?v=buy-1"></script>
-  <script src="identity.js?v=identity-2"></script>
+  <script src="manage.js?v=cleanup-1"></script>
+  <script src="buy.js?v=buy-grid-list-1"></script>
+  <script src="identity.js?v=cleanup-1"></script>
 </body>
 
 </html>

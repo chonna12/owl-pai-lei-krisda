@@ -466,6 +466,8 @@ a {
   position: relative;
   box-shadow: 0 10px 25px rgba(90, 56, 38, 0.15);
   text-align: center;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
 }
 
 .modal-close {
@@ -631,6 +633,19 @@ a {
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(90, 56, 38, .18);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 48px);
+}
+
+.apm-header,
+.apm-actions {
+  flex-shrink: 0;
+}
+
+.apm-listings {
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .apm-close {
@@ -937,6 +952,18 @@ a {
   padding: 4px;
   border-radius: 12px;
   margin-bottom: 22px;
+}
+
+.sf-variant-status {
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #70503b;
+}
+
+.sf-submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .sf-tab {
@@ -2070,6 +2097,57 @@ a {
   border-color: #f3f4f6;
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.bp-size-card:disabled {
+  background: #f2f2f2;
+  border-color: #e5e5e5;
+  color: #a0a0a0;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.bp-size-card:focus-visible {
+  outline: 3px solid #16a34a;
+  outline-offset: 3px;
+}
+
+.bp-size-card-unavail,
+.bp-size-card-color {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #919191;
+}
+
+.bp-used-item {
+  padding: 20px;
+  background: #fffdf9;
+  border: 1px solid #dfd0bf;
+  border-radius: 14px;
+}
+
+.bp-used-item h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: #4b3021;
+}
+
+.bp-used-reference {
+  margin: 0 0 10px;
+  color: #8c7565;
+  font-size: 13px;
+}
+
+.bp-used-defects {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bp-size-grid[hidden],
+.bp-listings-container[hidden],
+.bp-selection-panel[hidden] {
+  display: none;
 }
 
 .bp-size-card-label {

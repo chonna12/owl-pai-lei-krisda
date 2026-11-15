@@ -1,6 +1,6 @@
 # Database entities
 
-The full-project schema contains 23 tables. Buyer and Seller API responses retain their existing fields.
+The full-project schema contains 21 tables. Buyer and Seller API responses retain their existing fields.
 
 ## Consolidation choices
 
@@ -21,13 +21,11 @@ The full-project schema contains 23 tables. Buyer and Seller API responses retai
 | addresses | Multiple delivery addresses |
 | products | Platform catalog and category names |
 | product_variants | Sizes, colors and SKUs |
-| seller_offers | Seller price, condition, defects, stock and approval |
+| seller_offers | Seller price, condition, defects, stock, approval and queue position |
 | queue_groups | Queue for each variant and condition |
-| queue_entries | Offer positions and turns |
 | wishlist_items | Saved products |
 | coupons | Discount rules |
-| orders | Buyer, totals, shipping snapshot, cancellation and order status |
-| order_items | Purchased offer and immutable price/item snapshot |
+| orders | One purchased offer per order: buyer, seller, variant, immutable item/price/address snapshots, totals, cancellation and fulfillment |
 | coupon_redemptions | Usage limits and coupon history |
 | payments | Payment records and duplicate protection |
 | qc_inspections | QC results and seller scores |

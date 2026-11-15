@@ -1,235 +1,232 @@
-table,column,type,nullable,keys,references
-activity_logs,log_id,bigint,NO,PK,
-activity_logs,event_source,character varying(10),NO,,
-activity_logs,event_type,character varying(60),NO,,
-activity_logs,actor_id,bigint,YES,,users.user_id
-activity_logs,order_id,bigint,YES,,orders.order_id
-activity_logs,shipment_id,bigint,YES,,shipments.shipment_id
-activity_logs,group_id,bigint,YES,,queue_groups.group_id
-activity_logs,offer_id,bigint,YES,,seller_offers.offer_id
-activity_logs,refund_id,bigint,YES,,refunds.refund_id
-activity_logs,payout_id,bigint,YES,,payouts.payout_id
-activity_logs,verification_id,bigint,YES,,users.user_id
-activity_logs,charge_id,bigint,YES,,seller_charges.charge_id
-activity_logs,status,character varying(40),YES,,
-activity_logs,location,character varying(150),YES,,
-activity_logs,note,text,NO,,
-activity_logs,details,jsonb,NO,,
-activity_logs,entity_type,character varying(40),YES,,
-activity_logs,entity_id,bigint,YES,,
-activity_logs,source_record_id,bigint,YES,,
-activity_logs,created_at,timestamp with time zone,NO,,
-addresses,address_id,bigint,NO,PK,
-addresses,user_id,bigint,NO,,users.user_id
-addresses,recipient_name,character varying(100),NO,,
-addresses,phone,character varying(30),NO,,
-addresses,address_line,text,NO,,
-addresses,district,character varying(100),NO,,
-addresses,province,character varying(100),NO,,
-addresses,postal_code,character varying(15),NO,,
-addresses,is_default,boolean,NO,,
-addresses,archived,boolean,NO,,
-assets,asset_id,bigint,NO,PK,
-assets,product_id,bigint,YES,,products.product_id
-assets,offer_id,bigint,YES,,seller_offers.offer_id
-assets,inspection_id,bigint,YES,,qc_inspections.inspection_id
-assets,file_reference,text,NO,,
-assets,caption,text,NO,,
-assets,sort_order,smallint,NO,,
-assets,source_table,character varying(30),YES,,
-assets,source_record_id,bigint,YES,,
-coupon_redemptions,redemption_id,bigint,NO,PK,
-coupon_redemptions,coupon_id,bigint,NO,,coupons.coupon_id
-coupon_redemptions,user_id,bigint,NO,,users.user_id
-coupon_redemptions,order_id,bigint,NO,,orders.order_id
-coupon_redemptions,discount_applied,"numeric(12,2)",NO,,
-coupon_redemptions,redeemed_at,timestamp with time zone,NO,,
-coupons,coupon_id,bigint,NO,PK,
-coupons,code,character varying(40),NO,,
-coupons,discount_type,character varying(10),NO,,
-coupons,value,"numeric(12,2)",NO,,
-coupons,min_spend,"numeric(12,2)",NO,,
-coupons,starts_at,timestamp with time zone,NO,,
-coupons,expires_at,timestamp with time zone,NO,,
-coupons,usage_limit,integer,NO,,
-coupons,active,boolean,NO,,
-coupons,created_by,bigint,NO,,users.user_id
-notifications,notification_id,bigint,NO,PK,
-notifications,user_id,bigint,NO,,users.user_id
-notifications,order_id,bigint,YES,,orders.order_id
-notifications,offer_id,bigint,YES,,seller_offers.offer_id
-notifications,type,character varying(40),NO,,
-notifications,message,text,NO,,
-notifications,is_read,boolean,NO,,
-notifications,created_at,timestamp with time zone,NO,,
-order_items,order_item_id,bigint,NO,PK,
-order_items,order_id,bigint,NO,,orders.order_id
-order_items,offer_id,bigint,NO,,seller_offers.offer_id
-order_items,seller_id,bigint,NO,,users.user_id
-order_items,variant_id,bigint,NO,,product_variants.variant_id
-order_items,product_name_snapshot,character varying(150),NO,,
-order_items,size_snapshot,character varying(30),NO,,
-order_items,color_snapshot,character varying(50),NO,,
-order_items,condition_snapshot,character varying(10),NO,,
-order_items,defects_snapshot,text,NO,,
-order_items,quantity,smallint,NO,,
-order_items,unit_price,"numeric(12,2)",NO,,
-order_items,fulfillment_status,character varying(30),NO,,
-orders,order_id,bigint,NO,PK,
-orders,buyer_id,bigint,NO,,users.user_id
-orders,status,character varying(20),NO,,
-orders,item_subtotal,"numeric(12,2)",NO,,
-orders,platform_fee,"numeric(12,2)",NO,,
-orders,discount,"numeric(12,2)",NO,,
-orders,shipping_fee,"numeric(12,2)",NO,,
-orders,total,"numeric(12,2)",NO,,
-orders,coupon_id,bigint,YES,,coupons.coupon_id
-orders,created_at,timestamp with time zone,NO,,
-orders,cancellation_reason,text,YES,,
-orders,cancellation_status,character varying(20),YES,,
-orders,cancellation_reviewed_by,bigint,YES,,users.user_id
-orders,cancellation_reviewed_at,timestamp with time zone,YES,,
-orders,cancellation_created_at,timestamp with time zone,YES,,
-orders,completed_at,timestamp with time zone,YES,,
-orders,shipping_recipient_name,character varying(100),YES,,
-orders,shipping_phone,character varying(30),YES,,
-orders,shipping_address_line,text,YES,,
-orders,shipping_district,character varying(100),YES,,
-orders,shipping_province,character varying(100),YES,,
-orders,shipping_postal_code,character varying(15),YES,,
-payments,payment_id,bigint,NO,PK,
-payments,order_id,bigint,NO,,orders.order_id
-payments,amount,"numeric(12,2)",NO,,
-payments,method,character varying(30),NO,,
-payments,status,character varying(20),NO,,
-payments,reference,character varying(120),NO,,
-payments,verified_by,bigint,YES,,users.user_id
-payments,paid_at,timestamp with time zone,YES,,
-payout_items,payout_id,bigint,NO,PK,payouts.payout_id
-payout_items,order_item_id,bigint,NO,PK,order_items.order_item_id
-payout_items,amount,"numeric(12,2)",NO,,
-payouts,payout_id,bigint,NO,PK,
-payouts,seller_id,bigint,NO,,users.user_id
-payouts,bank_account_id,bigint,NO,,users.user_id
-payouts,bank_name_snapshot,character varying(100),NO,,
-payouts,account_holder_snapshot,character varying(100),NO,,
-payouts,account_number_snapshot,character varying(50),NO,,
-payouts,amount,"numeric(12,2)",NO,,
-payouts,status,character varying(20),NO,,
-payouts,created_by,bigint,NO,,users.user_id
-payouts,created_at,timestamp with time zone,NO,,
-payouts,approved_by,bigint,YES,,users.user_id
-payouts,approved_at,timestamp with time zone,YES,,
-payouts,paid_by,bigint,YES,,users.user_id
-payouts,paid_at,timestamp with time zone,YES,,
-payouts,transfer_reference,character varying(120),YES,,
-product_variants,variant_id,bigint,NO,PK,
-product_variants,product_id,bigint,NO,,products.product_id
-product_variants,size,character varying(30),NO,,
-product_variants,color,character varying(50),NO,,
-product_variants,sku,character varying(80),NO,,
-product_variants,active,boolean,NO,,
-products,product_id,bigint,NO,PK,
-products,category,character varying(100),NO,,
-products,brand_name,character varying(100),NO,,
-products,name,character varying(150),NO,,
-products,description,text,NO,,
-products,active,boolean,NO,,
-products,created_by,bigint,NO,,users.user_id
-products,created_at,timestamp with time zone,NO,,
-qc_inspections,inspection_id,bigint,NO,PK,
-qc_inspections,order_item_id,bigint,NO,,order_items.order_item_id
-qc_inspections,inspector_id,bigint,NO,,users.user_id
-qc_inspections,result,character varying(10),NO,,
-qc_inspections,seller_score,smallint,NO,,
-qc_inspections,notes,text,NO,,
-qc_inspections,inspected_at,timestamp with time zone,NO,,
-queue_entries,offer_id,bigint,NO,PK,seller_offers.offer_id
-queue_entries,group_id,bigint,NO,,queue_groups.group_id
-queue_entries,position,bigint,NO,,
-queue_entries,skips_remaining,smallint,NO,,
-queue_groups,group_id,bigint,NO,PK,
-queue_groups,variant_id,bigint,NO,,product_variants.variant_id
-queue_groups,condition,character varying(10),NO,,
-queue_groups,active_offer_id,bigint,YES,,seller_offers.offer_id
-queue_groups,active_since,timestamp with time zone,YES,,
-queue_groups,next_position,bigint,NO,,
-refunds,refund_id,bigint,NO,PK,
-refunds,order_id,bigint,NO,,orders.order_id
-refunds,payment_id,bigint,NO,,payments.payment_id
-refunds,amount,"numeric(12,2)",NO,,
-refunds,reason,text,NO,,
-refunds,status,character varying(20),NO,,
-refunds,approved_by,bigint,YES,,users.user_id
-refunds,approved_at,timestamp with time zone,YES,,
-refunds,paid_by,bigint,YES,,users.user_id
-refunds,paid_at,timestamp with time zone,YES,,
-refunds,transfer_reference,character varying(120),YES,,
-seller_charges,charge_id,bigint,NO,PK,
-seller_charges,seller_id,bigint,NO,,users.user_id
-seller_charges,shipment_id,bigint,NO,,shipments.shipment_id
-seller_charges,amount,"numeric(12,2)",NO,,
-seller_charges,reason,character varying(30),NO,,
-seller_charges,status,character varying(20),NO,,
-seller_charges,payment_reference,character varying(120),YES,,
-seller_charges,recorded_by,bigint,NO,,users.user_id
-seller_charges,paid_at,timestamp with time zone,YES,,
-seller_offers,offer_id,bigint,NO,PK,
-seller_offers,seller_id,bigint,NO,,users.user_id
-seller_offers,variant_id,bigint,NO,,product_variants.variant_id
-seller_offers,condition,character varying(10),NO,,
-seller_offers,condition_notes,text,NO,,
-seller_offers,defects,text,NO,,
-seller_offers,asking_price,"numeric(12,2)",NO,,
-seller_offers,available_quantity,integer,NO,,
-seller_offers,status,character varying(20),NO,,
-seller_offers,created_at,timestamp with time zone,NO,,
-seller_offers,review_decision,character varying(10),YES,,
-seller_offers,reviewed_by,bigint,YES,,users.user_id
-seller_offers,review_reason,text,YES,,
-seller_offers,reviewed_at,timestamp with time zone,YES,,
-sessions,session_id,bigint,NO,PK,
-sessions,user_id,bigint,NO,,users.user_id
-sessions,token_hash,character(64),NO,,
-sessions,expires_at,timestamp with time zone,NO,,
-sessions,revoked_at,timestamp with time zone,YES,,
-shipments,shipment_id,bigint,NO,PK,
-shipments,order_item_id,bigint,NO,,order_items.order_item_id
-shipments,leg,character varying(20),NO,,
-shipments,carrier,character varying(80),NO,,
-shipments,tracking_number,character varying(120),NO,,
-shipments,status,character varying(20),NO,,
-shipments,shipping_cost,"numeric(12,2)",NO,,
-shipments,payer,character varying(10),NO,,
-shipments,created_by,bigint,NO,,users.user_id
-shipments,shipped_at,timestamp with time zone,NO,,
-shipments,delivered_at,timestamp with time zone,YES,,
-users,user_id,bigint,NO,PK,
-users,full_name,character varying(100),NO,,
-users,email,character varying(254),NO,,
-users,phone,character varying(30),YES,,
-users,password_hash,text,NO,,
-users,status,character varying(20),NO,,
-users,created_at,timestamp with time zone,NO,,
-users,is_buyer,boolean,NO,,
-users,is_seller,boolean,NO,,
-users,is_admin,boolean,NO,,
-users,is_qc,boolean,NO,,
-users,bank_name,character varying(100),YES,,
-users,account_holder,character varying(100),YES,,
-users,account_number,character varying(50),YES,,
-users,bank_verified,boolean,NO,,
-users,bank_archived,boolean,NO,,
-users,id_document_reference,text,YES,,
-users,bank_document_reference,text,YES,,
-users,verification_status,character varying(20),YES,,
-users,verification_reviewer_id,bigint,YES,,users.user_id
-users,verification_review_note,text,YES,,
-users,verification_submitted_at,timestamp with time zone,YES,,
-users,verification_reviewed_at,timestamp with time zone,YES,,
-users,seller_display_name,character varying(100),YES,,
-users,seller_status,character varying(20),YES,,
-users,seller_since,timestamp with time zone,YES,,
-wishlist_items,user_id,bigint,NO,PK,users.user_id
-wishlist_items,product_id,bigint,NO,PK,products.product_id
-wishlist_items,added_at,timestamp with time zone,NO,,
+table,column,type,nullable,key,references
+"activity_logs","log_id","bigint","NO","PK",""
+"activity_logs","event_source","character varying(10)","NO","",""
+"activity_logs","event_type","character varying(60)","NO","",""
+"activity_logs","actor_id","bigint","YES","","users.user_id"
+"activity_logs","order_id","bigint","YES","","orders.order_id"
+"activity_logs","shipment_id","bigint","YES","","shipments.shipment_id"
+"activity_logs","group_id","bigint","YES","","queue_groups.group_id"
+"activity_logs","offer_id","bigint","YES","","seller_offers.offer_id"
+"activity_logs","refund_id","bigint","YES","","refunds.refund_id"
+"activity_logs","payout_id","bigint","YES","","payouts.payout_id"
+"activity_logs","verification_id","bigint","YES","","users.user_id"
+"activity_logs","charge_id","bigint","YES","","seller_charges.charge_id"
+"activity_logs","status","character varying(40)","YES","",""
+"activity_logs","location","character varying(150)","YES","",""
+"activity_logs","note","text","NO","",""
+"activity_logs","details","jsonb","NO","",""
+"activity_logs","entity_type","character varying(40)","YES","",""
+"activity_logs","entity_id","bigint","YES","",""
+"activity_logs","source_record_id","bigint","YES","",""
+"activity_logs","created_at","timestamp with time zone","NO","",""
+"addresses","address_id","bigint","NO","PK",""
+"addresses","user_id","bigint","NO","","users.user_id"
+"addresses","recipient_name","character varying(100)","NO","",""
+"addresses","phone","character varying(30)","NO","",""
+"addresses","address_line","text","NO","",""
+"addresses","district","character varying(100)","NO","",""
+"addresses","province","character varying(100)","NO","",""
+"addresses","postal_code","character varying(15)","NO","",""
+"addresses","is_default","boolean","NO","",""
+"addresses","archived","boolean","NO","",""
+"assets","asset_id","bigint","NO","PK",""
+"assets","product_id","bigint","YES","","products.product_id"
+"assets","offer_id","bigint","YES","","seller_offers.offer_id"
+"assets","inspection_id","bigint","YES","","qc_inspections.inspection_id"
+"assets","file_reference","text","NO","",""
+"assets","caption","text","NO","",""
+"assets","sort_order","smallint","NO","",""
+"assets","source_table","character varying(30)","YES","",""
+"assets","source_record_id","bigint","YES","",""
+"coupon_redemptions","redemption_id","bigint","NO","PK",""
+"coupon_redemptions","coupon_id","bigint","NO","","coupons.coupon_id"
+"coupon_redemptions","user_id","bigint","NO","","users.user_id"
+"coupon_redemptions","order_id","bigint","NO","","orders.order_id"
+"coupon_redemptions","discount_applied","numeric(12,2)","NO","",""
+"coupon_redemptions","redeemed_at","timestamp with time zone","NO","",""
+"coupons","coupon_id","bigint","NO","PK",""
+"coupons","code","character varying(40)","NO","",""
+"coupons","discount_type","character varying(10)","NO","",""
+"coupons","value","numeric(12,2)","NO","",""
+"coupons","min_spend","numeric(12,2)","NO","",""
+"coupons","starts_at","timestamp with time zone","NO","",""
+"coupons","expires_at","timestamp with time zone","NO","",""
+"coupons","usage_limit","integer","NO","",""
+"coupons","active","boolean","NO","",""
+"coupons","created_by","bigint","NO","","users.user_id"
+"notifications","notification_id","bigint","NO","PK",""
+"notifications","user_id","bigint","NO","","users.user_id"
+"notifications","order_id","bigint","YES","","orders.order_id"
+"notifications","offer_id","bigint","YES","","seller_offers.offer_id"
+"notifications","type","character varying(40)","NO","",""
+"notifications","message","text","NO","",""
+"notifications","is_read","boolean","NO","",""
+"notifications","created_at","timestamp with time zone","NO","",""
+"orders","order_id","bigint","NO","PK",""
+"orders","buyer_id","bigint","NO","","users.user_id"
+"orders","status","character varying(20)","NO","",""
+"orders","item_subtotal","numeric(12,2)","NO","",""
+"orders","platform_fee","numeric(12,2)","NO","",""
+"orders","discount","numeric(12,2)","NO","",""
+"orders","shipping_fee","numeric(12,2)","NO","",""
+"orders","total","numeric(12,2)","NO","",""
+"orders","coupon_id","bigint","YES","","coupons.coupon_id"
+"orders","created_at","timestamp with time zone","NO","",""
+"orders","cancellation_reason","text","YES","",""
+"orders","cancellation_status","character varying(20)","YES","",""
+"orders","cancellation_reviewed_by","bigint","YES","","users.user_id"
+"orders","cancellation_reviewed_at","timestamp with time zone","YES","",""
+"orders","cancellation_created_at","timestamp with time zone","YES","",""
+"orders","completed_at","timestamp with time zone","YES","",""
+"orders","shipping_recipient_name","character varying(100)","YES","",""
+"orders","shipping_phone","character varying(30)","YES","",""
+"orders","shipping_address_line","text","YES","",""
+"orders","shipping_district","character varying(100)","YES","",""
+"orders","shipping_province","character varying(100)","YES","",""
+"orders","shipping_postal_code","character varying(15)","YES","",""
+"orders","offer_id","bigint","NO","","seller_offers.offer_id"
+"orders","seller_id","bigint","NO","","users.user_id"
+"orders","variant_id","bigint","NO","","product_variants.variant_id"
+"orders","product_name_snapshot","character varying(150)","NO","",""
+"orders","size_snapshot","character varying(30)","NO","",""
+"orders","color_snapshot","character varying(50)","NO","",""
+"orders","condition_snapshot","character varying(10)","NO","",""
+"orders","defects_snapshot","text","NO","",""
+"orders","quantity","smallint","NO","",""
+"orders","unit_price","numeric(12,2)","NO","",""
+"orders","fulfillment_status","character varying(30)","NO","",""
+"payments","payment_id","bigint","NO","PK",""
+"payments","order_id","bigint","NO","","orders.order_id"
+"payments","amount","numeric(12,2)","NO","",""
+"payments","method","character varying(30)","NO","",""
+"payments","status","character varying(20)","NO","",""
+"payments","reference","character varying(120)","NO","",""
+"payments","verified_by","bigint","YES","","users.user_id"
+"payments","paid_at","timestamp with time zone","YES","",""
+"payout_items","payout_id","bigint","NO","PK","payouts.payout_id"
+"payout_items","order_id","bigint","NO","PK","orders.order_id"
+"payout_items","amount","numeric(12,2)","NO","",""
+"payouts","payout_id","bigint","NO","PK",""
+"payouts","seller_id","bigint","NO","","users.user_id"
+"payouts","bank_account_id","bigint","NO","","users.user_id"
+"payouts","bank_name_snapshot","character varying(100)","NO","",""
+"payouts","account_holder_snapshot","character varying(100)","NO","",""
+"payouts","account_number_snapshot","character varying(50)","NO","",""
+"payouts","amount","numeric(12,2)","NO","",""
+"payouts","status","character varying(20)","NO","",""
+"payouts","created_by","bigint","NO","","users.user_id"
+"payouts","created_at","timestamp with time zone","NO","",""
+"payouts","approved_by","bigint","YES","","users.user_id"
+"payouts","approved_at","timestamp with time zone","YES","",""
+"payouts","paid_by","bigint","YES","","users.user_id"
+"payouts","paid_at","timestamp with time zone","YES","",""
+"payouts","transfer_reference","character varying(120)","YES","",""
+"product_variants","variant_id","bigint","NO","PK",""
+"product_variants","product_id","bigint","NO","","products.product_id"
+"product_variants","size","character varying(30)","NO","",""
+"product_variants","color","character varying(50)","NO","",""
+"product_variants","sku","character varying(80)","NO","",""
+"product_variants","active","boolean","NO","",""
+"products","product_id","bigint","NO","PK",""
+"products","category","character varying(100)","NO","",""
+"products","brand_name","character varying(100)","NO","",""
+"products","name","character varying(150)","NO","",""
+"products","description","text","NO","",""
+"products","active","boolean","NO","",""
+"products","created_by","bigint","NO","","users.user_id"
+"products","created_at","timestamp with time zone","NO","",""
+"qc_inspections","inspection_id","bigint","NO","PK",""
+"qc_inspections","order_id","bigint","NO","","orders.order_id"
+"qc_inspections","inspector_id","bigint","NO","","users.user_id"
+"qc_inspections","result","character varying(10)","NO","",""
+"qc_inspections","seller_score","smallint","NO","",""
+"qc_inspections","notes","text","NO","",""
+"qc_inspections","inspected_at","timestamp with time zone","NO","",""
+"queue_groups","group_id","bigint","NO","PK",""
+"queue_groups","variant_id","bigint","NO","","product_variants.variant_id"
+"queue_groups","condition","character varying(10)","NO","",""
+"queue_groups","active_offer_id","bigint","YES","","seller_offers.offer_id"
+"queue_groups","active_since","timestamp with time zone","YES","",""
+"queue_groups","next_position","bigint","NO","",""
+"refunds","refund_id","bigint","NO","PK",""
+"refunds","order_id","bigint","NO","","orders.order_id"
+"refunds","payment_id","bigint","NO","","payments.payment_id"
+"refunds","amount","numeric(12,2)","NO","",""
+"refunds","reason","text","NO","",""
+"refunds","status","character varying(20)","NO","",""
+"refunds","approved_by","bigint","YES","","users.user_id"
+"refunds","approved_at","timestamp with time zone","YES","",""
+"refunds","paid_by","bigint","YES","","users.user_id"
+"refunds","paid_at","timestamp with time zone","YES","",""
+"refunds","transfer_reference","character varying(120)","YES","",""
+"seller_charges","charge_id","bigint","NO","PK",""
+"seller_charges","seller_id","bigint","NO","","users.user_id"
+"seller_charges","shipment_id","bigint","NO","","shipments.shipment_id"
+"seller_charges","amount","numeric(12,2)","NO","",""
+"seller_charges","reason","character varying(30)","NO","",""
+"seller_charges","status","character varying(20)","NO","",""
+"seller_charges","payment_reference","character varying(120)","YES","",""
+"seller_charges","recorded_by","bigint","NO","","users.user_id"
+"seller_charges","paid_at","timestamp with time zone","YES","",""
+"seller_offers","offer_id","bigint","NO","PK",""
+"seller_offers","seller_id","bigint","NO","","users.user_id"
+"seller_offers","variant_id","bigint","NO","","product_variants.variant_id"
+"seller_offers","condition","character varying(10)","NO","",""
+"seller_offers","condition_notes","text","NO","",""
+"seller_offers","defects","text","NO","",""
+"seller_offers","asking_price","numeric(12,2)","NO","",""
+"seller_offers","available_quantity","integer","NO","",""
+"seller_offers","status","character varying(20)","NO","",""
+"seller_offers","created_at","timestamp with time zone","NO","",""
+"seller_offers","review_decision","character varying(10)","YES","",""
+"seller_offers","reviewed_by","bigint","YES","","users.user_id"
+"seller_offers","review_reason","text","YES","",""
+"seller_offers","reviewed_at","timestamp with time zone","YES","",""
+"seller_offers","queue_group_id","bigint","YES","","queue_groups.group_id"
+"seller_offers","queue_position","bigint","YES","",""
+"seller_offers","skips_remaining","smallint","YES","",""
+"sessions","session_id","bigint","NO","PK",""
+"sessions","user_id","bigint","NO","","users.user_id"
+"sessions","token_hash","character(64)","NO","",""
+"sessions","expires_at","timestamp with time zone","NO","",""
+"sessions","revoked_at","timestamp with time zone","YES","",""
+"shipments","shipment_id","bigint","NO","PK",""
+"shipments","order_id","bigint","NO","","orders.order_id"
+"shipments","leg","character varying(20)","NO","",""
+"shipments","carrier","character varying(80)","NO","",""
+"shipments","tracking_number","character varying(120)","NO","",""
+"shipments","status","character varying(20)","NO","",""
+"shipments","shipping_cost","numeric(12,2)","NO","",""
+"shipments","payer","character varying(10)","NO","",""
+"shipments","created_by","bigint","NO","","users.user_id"
+"shipments","shipped_at","timestamp with time zone","NO","",""
+"shipments","delivered_at","timestamp with time zone","YES","",""
+"users","user_id","bigint","NO","PK",""
+"users","full_name","character varying(100)","NO","",""
+"users","email","character varying(254)","NO","",""
+"users","phone","character varying(30)","YES","",""
+"users","password_hash","text","NO","",""
+"users","status","character varying(20)","NO","",""
+"users","created_at","timestamp with time zone","NO","",""
+"users","is_buyer","boolean","NO","",""
+"users","is_seller","boolean","NO","",""
+"users","is_admin","boolean","NO","",""
+"users","is_qc","boolean","NO","",""
+"users","bank_name","character varying(100)","YES","",""
+"users","account_holder","character varying(100)","YES","",""
+"users","account_number","character varying(50)","YES","",""
+"users","bank_verified","boolean","NO","",""
+"users","bank_archived","boolean","NO","",""
+"users","id_document_reference","text","YES","",""
+"users","bank_document_reference","text","YES","",""
+"users","verification_status","character varying(20)","YES","",""
+"users","verification_reviewer_id","bigint","YES","","users.user_id"
+"users","verification_review_note","text","YES","",""
+"users","verification_submitted_at","timestamp with time zone","YES","",""
+"users","verification_reviewed_at","timestamp with time zone","YES","",""
+"users","seller_display_name","character varying(100)","YES","",""
+"users","seller_status","character varying(20)","YES","",""
+"users","seller_since","timestamp with time zone","YES","",""
+"wishlist_items","user_id","bigint","NO","PK","users.user_id"
+"wishlist_items","product_id","bigint","NO","PK","products.product_id"
+"wishlist_items","added_at","timestamp with time zone","NO","",""

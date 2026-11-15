@@ -23,13 +23,6 @@ const getJson = (url, options = {}) => requestJson(url, options);
 
 async function getCurrentUser() {
   if (window.currentUser && window.currentUser.name) return window.currentUser;
-  if (window.DemoSeller) {
-    try {
-      const user = await window.DemoSeller.ensureDemoSession();
-      window.currentUser = user;
-      return user;
-    } catch (_) { }
-  }
   try {
     const data = await getJson('/api/me');
     window.currentUser = data.user || null;
@@ -42,9 +35,6 @@ async function getCurrentUser() {
 // All seller API calls go through here. If the session expired, reload so
 // login.js can re-authenticate the user.
 async function sellerRequest(url, options = {}) {
-  if (window.DemoSeller) {
-    return window.DemoSeller.sellerRequest(url, options);
-  }
   const user = await getCurrentUser();
   if (!user || !user.canSell) {
     throw new Error('Only sellers can list items for sale. You are signed in as a Buyer.');
@@ -242,25 +232,54 @@ async function showSellForm(product) {
 
   // Load variants into <select>
   const select = page.querySelector('#form-variant');
-  try {
-    const data = await getJson(`/api/products/${product.product_id}/variants`);
-    const variants = data.variants || [];
-    if (variants.length) {
-      variants.forEach(v => {
-        const opt = document.createElement('option');
-        opt.value = v.variant_id;
-        opt.textContent = `${v.size} / ${v.color}`;
-        select.append(opt);
+  const message = page.querySelector('#sf-error');
+  const btn = page.querySelector('#sf-submit');
+  const variantStatus = page.querySelector('#sf-variant-status');
+  const retryVariants = page.querySelector('#sf-retry-variants');
+  let variantsReady = false;
+  const setVariantPlaceholder = label => {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = label;
+    select.replaceChildren(option);
+  };
+  async function loadVariants() {
+    variantsReady = false;
+    select.disabled = btn.disabled = true;
+    retryVariants.hidden = true;
+    message.textContent = '';
+    variantStatus.textContent = 'Loading available sizes…';
+    setVariantPlaceholder('Loading sizes…');
+    try {
+      const data = await getJson(`/api/products/${product.product_id}/variants`, {
+        signal: AbortSignal.timeout(10000)
       });
-    } else {
-      const opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = 'No variants available';
-      select.append(opt);
+      const sizes = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+      const variants = (data.variants || []).filter(v => v.variant_id && v.size &&
+        String(v.product_id) === String(product.product_id)).sort((a, b) => {
+        const ai = sizes.indexOf(a.size), bi = sizes.indexOf(b.size);
+        return ai >= 0 && bi >= 0 ? ai - bi : a.size.localeCompare(b.size, undefined, { numeric: true });
+      });
+      if (!variants.length) throw new Error('No active sizes are configured for this product.');
+      setVariantPlaceholder('Choose a size / color');
+      for (const variant of variants) {
+        const option = document.createElement('option');
+        option.value = variant.variant_id;
+        option.textContent = `${variant.size} / ${variant.color}`;
+        select.appendChild(option);
+      }
+      variantStatus.textContent = `Available sizes: ${[...new Set(variants.map(v => v.size))].join(', ')}`;
+      variantsReady = true;
+      select.disabled = btn.disabled = false;
+    } catch (error) {
+      setVariantPlaceholder('Sizes could not be loaded');
+      variantStatus.textContent = 'Sizes are unavailable. Please try again.';
+      message.textContent = error.name === 'TimeoutError' ? 'Loading sizes timed out. Please try again.' : error.message;
+      retryVariants.hidden = false;
     }
-  } catch (e) {
-    console.error('Could not load variants', e);
   }
+  retryVariants.addEventListener('click', loadVariants);
+  await loadVariants();
 
   // Condition tabs
   let selectedCondition = 'new';
@@ -291,8 +310,6 @@ async function showSellForm(product) {
   const photos = [];
   const photoInput = page.querySelector('#form-photos');
   const previews = page.querySelector('#photo-previews');
-  const message = page.querySelector('#sf-error');
-  const btn = page.querySelector('#sf-submit');
   let readingPhotos = false;
   const repaint = () => renderPhotoPreviews(previews, photos, index => {
     photos.splice(index, 1); repaint();
@@ -314,13 +331,18 @@ async function showSellForm(product) {
       }
       photos.push(...loaded); repaint();
     } catch (error) { message.textContent = error.message; }
-    finally { readingPhotos = false; btn.disabled = false; photoInput.value = ''; }
+    finally { readingPhotos = false; btn.disabled = !variantsReady; photoInput.value = ''; }
   });
 
   // UI -> POST API -> create_offer/savePhotos -> PostgreSQL. Show success only after HTTP 201.
   page.querySelector('#offer-form').addEventListener('submit', async e => {
     e.preventDefault();
-    if (readingPhotos) return;
+    if (readingPhotos || !variantsReady) return;
+    if (!select.value) {
+      message.textContent = 'Please choose a size / color before submitting.';
+      select.focus();
+      return;
+    }
     btn.disabled = true; btn.textContent = 'Submitting…'; message.textContent = '';
     try {
       const result = await sellerRequest('/api/seller/offers', {
@@ -486,7 +508,7 @@ async function openEditOfferModal(offer) {
   titleEl.textContent = `#${offer.offer_id} · ${offer.product_name || 'Product'}`;
   priceInput.value = offer.asking_price != null ? Number(offer.asking_price).toFixed(2) : (offer.price ? Number(offer.price).toFixed(2) : '');
   qtyInput.value = offer.available_quantity || 1;
-  notesInput.value = offer.condition_notes || '';
+  notesInput.value = (offer.condition_notes || '').replace(/\bdemo\b/gi, '').trim();
   errorEl.hidden = true;
   errorEl.textContent = '';
 
