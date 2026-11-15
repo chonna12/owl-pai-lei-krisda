@@ -8,7 +8,7 @@
 | New multiple units, used one unit with defects | seller_offers CHECK + create_offer |
 | Admin approves before sale | seller_offers.review_* + review_offer |
 | Approved offer cannot be edited | offer protection triggers |
-| FIFO turn, 24-hour timeout | queue_groups + queue_entries + advance_queue |
+| FIFO turn, 24-hour timeout | queue_groups + seller_offers.queue_position + advance_queue |
 | Lower QC rating reduces opportunities | qc_skip_count + stored skip counter |
 | One item per cart/order | PK(cart_id), UNIQUE(order_id), quantity=1 checks |
 | Reserve after confirmed payment | confirm_payment transaction and group lock |
@@ -20,7 +20,7 @@
 | Return Buyer full payment including initial shipping | refund amount equals captured payment |
 | Seller pays return shipping | hub_to_seller payer constraint + seller_charges |
 | Admin pays Seller after Buyer receipt | eligible_payouts + payout workflow |
-| Prevent duplicate payout | UNIQUE(order_item_id) in payout_items |
+| Prevent duplicate payout | UNIQUE(order_id) in payout_items |
 | No hard deletion of historic transactions | referenced records, withdrawal and immutable histories |
 | Notifications and audit | recipient user FK, action records without secrets |
 

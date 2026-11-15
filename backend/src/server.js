@@ -10,20 +10,10 @@ const pool = new pg.Pool({
   options: '-c search_path=owl,public',
   connectionTimeoutMillis: 5000,
 });
-const { rows: roleSchemaRows } = await pool.query(`
-  SELECT
-    EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='users' AND column_name='is_buyer') AS has_buyer_flag,
-    EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='products' AND column_name='category_id') AS has_category_id,
-    to_regclass('owl.roles') IS NOT NULL AND to_regclass('owl.user_roles') IS NOT NULL AS has_role_bridge
-`);
-const usesRoleBridge = !roleSchemaRows[0].has_buyer_flag && roleSchemaRows[0].has_role_bridge;
-const productCategory = roleSchemaRows[0].has_category_id ? 'c.name' : 'p.category';
-const productCatalogFrom = roleSchemaRows[0].has_category_id
-  ? 'products p JOIN categories c USING(category_id)'
-  : 'products p';
-const loginRoleFilter = usesRoleBridge
-  ? `EXISTS(SELECT 1 FROM user_roles ur JOIN roles r USING(role_id) WHERE ur.user_id=u.user_id AND r.name IN ('seller','buyer'))`
-  : '(u.is_seller OR u.is_buyer)';
+// The current 21-table schema stores roles on users and category text on products.
+const productCategory = 'p.category';
+const productCatalogFrom = 'products p';
+const loginRoleFilter = '(u.is_seller OR u.is_buyer)';
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '9mb' }));
@@ -77,14 +67,6 @@ app.post('/api/register', async (req, res) => {
     }
 
     const user = rows[0];
-    if (usesRoleBridge) {
-      const role = await client.query(`
-        INSERT INTO user_roles(user_id,role_id)
-        SELECT $1,role_id FROM roles WHERE name='buyer'
-        ON CONFLICT DO NOTHING
-      `, [user.user_id]);
-      if (!role.rowCount) throw new Error('Buyer role is not configured');
-    }
     const token = newToken();
     await client.query("INSERT INTO sessions(user_id,token_hash,expires_at) VALUES($1,$2,now()+interval '8 hours')", [user.user_id, tokenHash(token)]);
     await client.query('COMMIT');
@@ -115,11 +97,10 @@ app.get('/api/me', account, (req, res) => res.json({ user: { name: req.seller.fu
 app.post('/api/logout', account, async (req, res) => { await pool.query('UPDATE sessions SET revoked_at=now() WHERE token_hash=$1', [tokenHash(readToken(req))]); res.clearCookie('owl_session', { path: '/' }); res.json({ ok: true }); });
 app.get('/api/seller/offers', seller, async (req, res) => {
   const { rows } = await pool.query(`SELECT f.*,p.name,p.brand_name,p.category,v.size,v.color,
-    e.position AS queue_position,(g.active_offer_id=f.offer_id) AS is_active,
+    (g.active_offer_id=f.offer_id) AS is_active,
     coalesce((SELECT json_agg(a.file_reference ORDER BY a.sort_order,a.asset_id) FROM assets a WHERE a.offer_id=f.offer_id),'[]'::json) AS photos
     FROM seller_offers f JOIN product_variants v USING(variant_id) JOIN products p USING(product_id)
-    LEFT JOIN queue_entries e USING(offer_id)
-    LEFT JOIN queue_groups g ON g.group_id=e.group_id WHERE f.seller_id=$1 ORDER BY f.created_at DESC,f.offer_id DESC`, [req.seller.user_id]);
+    LEFT JOIN queue_groups g ON g.group_id=f.queue_group_id WHERE f.seller_id=$1 ORDER BY f.created_at DESC,f.offer_id DESC`, [req.seller.user_id]);
   res.json({ offers: rows });
 });
 function offerInput(req, res, next) {

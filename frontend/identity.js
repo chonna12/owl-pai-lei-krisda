@@ -23,13 +23,6 @@
     // ── User Session Helper ───────────────────────────────────────────────────
     async function getCurrentUser() {
         if (window.currentUser && window.currentUser.email) return window.currentUser;
-        if (window.DemoSeller) {
-            try {
-                const user = await window.DemoSeller.ensureDemoSession();
-                window.currentUser = user;
-                return user;
-            } catch (_) { }
-        }
         try {
             const res = await fetch('/api/me', { credentials: 'same-origin' });
             if (res.ok) {

@@ -264,15 +264,7 @@
         const data = await res.json();
         const user = data.user || {};
 
-        // If demo seller mode is OFF, automatically clear any leftover demo session
-        if (!window.DemoSeller && user.email === 'seller1@owl.test') {
-          try {
-            await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
-          } catch (_) { }
-          window.currentUser = null;
-          return false; // Show login/register screen for real users
-        }
-
+        // Back/Home reloads keep every valid session, including the demo seller.
         updateHeaderUser(user);
         return true;
       }
@@ -283,19 +275,6 @@
   // ── Bootstrap ─────────────────────────────────────────────────────────────────
 
   async function init() {
-    if (window.DemoSeller) return;
-
-    // Auto-detect demoseller.js: if the user removed .example, activate demo seller mode automatically!
-    try {
-      const demoCheck = await fetch('/demoseller.js', { method: 'HEAD' });
-      if (demoCheck.ok) {
-        const script = document.createElement('script');
-        script.src = 'demoseller.js?v=' + Date.now();
-        document.head.appendChild(script);
-        return;
-      }
-    } catch (_) { }
-
     initTabs();
     initLoginForm();
     initRegisterForm();
