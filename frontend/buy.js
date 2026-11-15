@@ -533,6 +533,7 @@
     }
 
     // 3. Post order to backend database
+    let orderData = null;
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
@@ -554,46 +555,46 @@
         return;
       }
 
-      const data = await res.json();
-      if (!data.order || !data.order.order_id) {
-        alert('Server returned an invalid order response. Please verify in My Orders.');
-        return;
-      }
-
-      // Real database order created successfully
-      const realOrder = {
-        order_id: data.order.order_id,
-        offer_id: listingItem.offer_id || null,
-        product_id: product.product_id,
-        product_name: product.name,
-        brand_name: product.brand_name || '',
-        category: product.category || 'Shoes',
-        image: product.image || null,
-        size: listingItem.size || 'Standard',
-        condition: listingItem.condition || 'new',
-        price: Number(data.order.total || priceNum),
-        status: 'pending_payment',
-        created_at: new Date().toISOString(),
-      };
-
-      addLocalOrder(realOrder);
-
-      // Immediately delete/remove purchased product from seller listings & active queue
-      if (listingItem.offer_id) {
-        markOfferPurchased(listingItem.offer_id);
-        allListings = allListings.filter(item => String(item.offer_id) !== String(listingItem.offer_id));
-        fetch(`/api/seller/offers/${listingItem.offer_id}/withdraw`, {
-          method: 'POST',
-          credentials: 'same-origin'
-        }).catch(() => {});
-      }
-
-      showOrderConfirmationPage(realOrder, product);
-
+      orderData = await res.json();
     } catch (networkError) {
       console.error('Order placement network error:', networkError);
-      alert('Network error while placing order. Please try again.');
+      alert('Network error while placing order. Please check your connection and try again.');
+      return;
     }
+
+    if (!orderData || !orderData.order || !orderData.order.order_id) {
+      alert('Server returned an invalid order response. Please verify in My Orders.');
+      return;
+    }
+
+    // Real database order created successfully
+    const realOrder = {
+      order_id: orderData.order.order_id,
+      offer_id: listingItem.offer_id || null,
+      product_id: product.product_id,
+      product_name: product.name,
+      brand_name: product.brand_name || '',
+      category: product.category || 'Shoes',
+      image: product.image || null,
+      size: listingItem.size || 'Standard',
+      condition: listingItem.condition || 'new',
+      price: Number(orderData.order.total || priceNum),
+      status: 'pending_payment',
+      created_at: new Date().toISOString(),
+    };
+
+    addLocalOrder(realOrder);
+
+    // Immediately delete/remove purchased product from seller listings & active queue
+    if (listingItem.offer_id) {
+      markOfferPurchased(listingItem.offer_id);
+      fetch(`/api/seller/offers/${listingItem.offer_id}/withdraw`, {
+        method: 'POST',
+        credentials: 'same-origin'
+      }).catch(() => {});
+    }
+
+    showOrderConfirmationPage(realOrder, product);
   }
 
   // ── 3. Order Action Screen ("Pay or Cancel") ──────────────────────────────────
