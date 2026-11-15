@@ -2,6 +2,7 @@
   "name": "owl-pai-lei",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "backend"
   ],
@@ -9,6 +10,8 @@
     "node": ">=22"
   },
   "scripts": {
+    "test": "node --test test/**/*.test.js",
+    "lint": "node scripts/lint.js",
     "start": "npm --workspace backend run start",
     "dev": "npm --workspace backend run dev",
     "db:setup": "npm --workspace backend run db:setup"
