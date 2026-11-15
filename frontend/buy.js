@@ -7,6 +7,51 @@
   const $ = id => document.getElementById(id);
   const ICONS = { Shoes: 'icon-shoe', Clothing: 'icon-tee', Accessories: 'icon-bag' };
   const ORDERS_STORAGE_KEY = 'owl_buyer_orders';
+  const PURCHASED_OFFERS_KEY = 'owl_purchased_offer_ids';
+
+  function getPurchasedOfferIds() {
+    if (typeof window.getPurchasedOfferIds === 'function') {
+      return window.getPurchasedOfferIds();
+    }
+    try {
+      const data = localStorage.getItem(PURCHASED_OFFERS_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function markOfferPurchased(offerId) {
+    if (!offerId) return;
+    if (typeof window.markOfferPurchased === 'function') {
+      window.markOfferPurchased(offerId);
+      return;
+    }
+    try {
+      const list = getPurchasedOfferIds().map(String);
+      if (!list.includes(String(offerId))) {
+        list.push(String(offerId));
+        localStorage.setItem(PURCHASED_OFFERS_KEY, JSON.stringify(list));
+      }
+    } catch (_) {}
+  }
+
+  function isOfferPurchased(offerId) {
+    if (!offerId) return false;
+    if (typeof window.isOfferPurchased === 'function') {
+      return window.isOfferPurchased(offerId);
+    }
+    try {
+      const list = getPurchasedOfferIds().map(String);
+      return list.includes(String(offerId));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  window.markOfferPurchased = window.markOfferPurchased || markOfferPurchased;
+  window.isOfferPurchased = window.isOfferPurchased || isOfferPurchased;
+  window.getPurchasedOfferIds = window.getPurchasedOfferIds || getPurchasedOfferIds;
 
   // ── Template Renderer ────────────────────────────────────────────────────────
   function renderTemplate(templateId) {
@@ -231,6 +276,15 @@
         { offer_id: 216, variant_id: 16, size: '10', condition: 'used', display_price: 2500.00, defects: 'Insoles replaced' }
       ];
     }
+
+    // Filter out any offers that were already purchased, sold, out of stock, or withdrawn
+    const purchasedIds = new Set(getPurchasedOfferIds().map(String));
+    allListings = allListings.filter(it =>
+      !purchasedIds.has(String(it.offer_id)) &&
+      Number(it.available_quantity ?? 1) > 0 &&
+      it.status !== 'withdrawn' &&
+      it.status !== 'sold'
+    );
 
     // Determine complete size list matching the screenshot
     const standardShoeSizes = ['3', '3.5', '4', '4.5', '5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5'];
@@ -509,6 +563,7 @@
       // Real database order created successfully
       const realOrder = {
         order_id: data.order.order_id,
+        offer_id: listingItem.offer_id || null,
         product_id: product.product_id,
         product_name: product.name,
         brand_name: product.brand_name || '',
@@ -522,6 +577,17 @@
       };
 
       addLocalOrder(realOrder);
+
+      // Immediately delete/remove purchased product from seller listings & active queue
+      if (listingItem.offer_id) {
+        markOfferPurchased(listingItem.offer_id);
+        allListings = allListings.filter(item => String(item.offer_id) !== String(listingItem.offer_id));
+        fetch(`/api/seller/offers/${listingItem.offer_id}/withdraw`, {
+          method: 'POST',
+          credentials: 'same-origin'
+        }).catch(() => {});
+      }
+
       showOrderConfirmationPage(realOrder, product);
 
     } catch (networkError) {
@@ -574,6 +640,13 @@
 
         // Successfully paid in DB
         updateLocalOrderStatus(order.order_id, 'paid');
+        if (order.offer_id) {
+          markOfferPurchased(order.offer_id);
+          fetch(`/api/seller/offers/${order.offer_id}/withdraw`, {
+            method: 'POST',
+            credentials: 'same-origin'
+          }).catch(() => {});
+        }
 
         statusBox.innerHTML = `
           <span class="bp-status-badge bp-status-paid">✅ Paid</span>
@@ -680,8 +753,16 @@
             mappedStatus = 'pending_payment';
           }
 
+          const localMatch = localOrders.find(lo => String(lo.order_id) === String(o.order_id));
+          const offerId = localMatch?.offer_id || o.offer_id || null;
+
+          if (mappedStatus === 'paid' && offerId) {
+            markOfferPurchased(offerId);
+          }
+
           return {
             order_id: o.order_id,
+            offer_id: offerId,
             product_name: o.product_name_snapshot || 'Product',
             brand_name: 'Owl Pai Lei',
             size: o.size_snapshot || 'Standard',
@@ -799,6 +880,13 @@
               return;
             }
             updateLocalOrderStatus(order.order_id, 'paid');
+            if (order.offer_id) {
+              markOfferPurchased(order.offer_id);
+              fetch(`/api/seller/offers/${order.offer_id}/withdraw`, {
+                method: 'POST',
+                credentials: 'same-origin'
+              }).catch(() => {});
+            }
             showBuyerOrdersPage();
           } catch (_) {
             alert('Network error during payment.');

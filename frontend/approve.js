@@ -39,6 +39,42 @@ async function getCurrentUser() {
   return window.currentUser;
 }
 
+const PURCHASED_OFFERS_KEY = 'owl_purchased_offer_ids';
+
+function getPurchasedOfferIds() {
+  try {
+    const data = localStorage.getItem(PURCHASED_OFFERS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function markOfferPurchased(offerId) {
+  if (!offerId) return;
+  try {
+    const list = getPurchasedOfferIds().map(String);
+    if (!list.includes(String(offerId))) {
+      list.push(String(offerId));
+      localStorage.setItem(PURCHASED_OFFERS_KEY, JSON.stringify(list));
+    }
+  } catch (_) {}
+}
+
+function isOfferPurchased(offerId) {
+  if (!offerId) return false;
+  try {
+    const list = getPurchasedOfferIds().map(String);
+    return list.includes(String(offerId));
+  } catch (_) {
+    return false;
+  }
+}
+
+window.markOfferPurchased = window.markOfferPurchased || markOfferPurchased;
+window.isOfferPurchased = window.isOfferPurchased || isOfferPurchased;
+window.getPurchasedOfferIds = window.getPurchasedOfferIds || getPurchasedOfferIds;
+
 // All seller API calls go through here. If the session expired, reload so
 // login.js can re-authenticate the user.
 async function sellerRequest(url, options = {}) {
@@ -375,7 +411,23 @@ async function showMyOrders() {
     }));
   } catch (error) { list.textContent = error.message; return; }
 
-  const activeOffers = offers.filter(o => o.status !== 'withdrawn');
+  const purchasedIds = new Set((window.getPurchasedOfferIds ? window.getPurchasedOfferIds() : getPurchasedOfferIds()).map(String));
+
+  // Auto-withdraw any sold or purchased offers belonging to this seller in PostgreSQL
+  offers.forEach(o => {
+    const isSoldOrPurchased = Number(o.available_quantity ?? 1) <= 0 || o.status === 'sold' || purchasedIds.has(String(o.offer_id));
+    if (isSoldOrPurchased && o.status !== 'withdrawn') {
+      sellerRequest(`/api/seller/offers/${o.offer_id}/withdraw`, { method: 'POST' }).catch(() => {});
+    }
+  });
+
+  // Filter out any offers that were purchased, sold, out of stock (available_quantity <= 0), or withdrawn
+  const activeOffers = offers.filter(o =>
+    o.status !== 'withdrawn' &&
+    o.status !== 'sold' &&
+    Number(o.available_quantity ?? 1) > 0 &&
+    !purchasedIds.has(String(o.offer_id))
+  );
 
   if (activeOffers.length === 0) {
     list.innerHTML = '';
