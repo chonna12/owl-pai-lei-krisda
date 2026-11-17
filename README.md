@@ -11,16 +11,15 @@ The consolidated schema contains 21 tables. The API supports Buyer and Seller fl
 5. Run npm run db:setup once.
 6. Run npm start. The default API address is http://127.0.0.1:3188/api/health.
 
-## Existing databases
+## Database files
 
-Back up the database before upgrading. Use the SQL files in this order in pgAdmin Query Tool with stop-on-error behavior.
+- `backend/database/schema.sql` defines the current 21 tables, constraints, views, triggers and workflow functions.
+- `backend/database/catalog-expansion.sql` supplies sample products, sizes and inventory.
+- `backend/scripts/setup-db.js` installs both files once into an empty database.
+- `backend/scripts/seed-catalog.js` updates the sample catalog on an existing database.
+- `backend/scripts/ensure-db.js` initializes an empty database for deployment and preserves an existing schema.
 
-- A 31-table database first runs backend/database/remove-unused-cart.sql after exporting and clearing old cart selections.
-- A 30-table database runs backend/database/consolidate-23.sql.
-- A 23-table database runs `npm run db:merge` with the server stopped and a backup saved first. This runs `backend/database/consolidate-21.sql` in a transaction.
-- Use the matching backend code after the upgrade.
-
-The consolidation runs inside a transaction. It preserves existing account, product, order and workflow data. It refuses databases with multiple bank accounts or verification records per seller, or custom platform fee/shipping settings. Resolve those cases before migration. Bank and verification identifiers now use the seller user_id; cancellation request identifiers now use order_id.
+Existing databases must already use the current 21-table schema. Legacy upgrade scripts are no longer included. Do not run setup again on an installed database.
 
 ## Demo
 
@@ -30,8 +29,8 @@ Platform values are defined once in owl.platform_configuration(): fee 10%, shipp
 
 See docs/ENTITIES.md for the 21 entities and docs/ER.mmd for the current relationships.
 
-Each order buys one unit: `orders` now stores the purchased offer, seller, variant, price and item snapshots, and fulfillment status. There is no `order_items` table. QC, shipments and payout items reference `orders.order_id`.
-Queue membership is stored on `seller_offers` as `queue_group_id`, `queue_position` and `skips_remaining`. There is no `queue_entries` table. Leaving a queue clears those columns and preserves the offer/history.
+Each order buys one unit: `orders` stores the purchased offer, seller, variant, price and item snapshots, and fulfillment status. QC, shipments and payout items reference `orders.order_id`.
+Queue membership is stored on `seller_offers` as `queue_group_id`, `queue_position` and `skips_remaining`. Leaving a queue clears those columns and preserves the offer/history.
 
 ## Catalog and stock
 

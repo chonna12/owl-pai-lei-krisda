@@ -7,8 +7,7 @@
     "start": "node --env-file=.env src/server.js",
     "dev": "node --env-file=.env --watch src/server.js",
     "db:setup": "node --env-file=.env scripts/setup-db.js",
-    "db:catalog": "node --env-file=.env scripts/seed-catalog.js",
-    "db:merge": "node --env-file=.env scripts/merge-db.js"
+    "db:catalog": "node --env-file=.env scripts/seed-catalog.js"
   },
   "dependencies": {
     "express": "^5.3.0",

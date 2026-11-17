@@ -15,7 +15,6 @@
     "start": "npm --workspace backend run start",
     "dev": "npm --workspace backend run dev",
     "db:setup": "npm --workspace backend run db:setup",
-    "db:catalog": "npm --workspace backend run db:catalog",
-    "db:merge": "npm --workspace backend run db:merge"
+    "db:catalog": "npm --workspace backend run db:catalog"
   }
 }
