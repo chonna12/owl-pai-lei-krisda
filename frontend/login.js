@@ -213,36 +213,16 @@
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           // Role is not sent — backend assigns a default role
-          body: JSON.stringify({ full_name: fullName, email, password }),
+          body: JSON.stringify({
+            full_name: fullName, email, password,
+            address: { recipientName: fullName, phone, addressLine, district, province, postalCode }
+          }),
         });
         const data = await res.json();
 
         if (!res.ok) {
           setError('register-error', data.error || 'Registration failed. Please try again.');
           return;
-        }
-
-        // Save home address to database using existing POST /api/addresses endpoint
-        try {
-          const addrRes = await fetch('/api/addresses', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              recipientName: fullName,
-              phone,
-              addressLine,
-              district,
-              province,
-              postalCode
-            })
-          });
-          if (!addrRes.ok) {
-            const addrErr = await addrRes.json().catch(() => ({}));
-            console.warn('Home address save notice:', addrErr.error || 'Failed to save address');
-          }
-        } catch (addrErr) {
-          console.warn('Home address network error:', addrErr);
         }
 
         // Auto-login after successful registration and briefly show confirmation.

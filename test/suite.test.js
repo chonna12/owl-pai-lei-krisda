@@ -65,6 +65,12 @@ describe('Owl Pai Lei Test Suite — CBE205 Week 13', () => {
 
   // ── REQ2: Cryptographic Password Hashing & Verification ───────────────────
   describe('REQ2 — Password Hashing & Constant-Time Verification', () => {
+    test('Malformed or missing stored passwords fail without throwing', () => {
+      for (const stored of [null, undefined, '', 'broken', 'salt:zz', 'a:b:c']) {
+        assert.equal(verifyPassword('TestPassword123!', stored), false);
+      }
+    });
+
     test('TC5 (Positive): Correctly hashes and verifies a valid password', () => {
       const plain = 'SuperSecret123!';
       const hash = hashPassword(plain);

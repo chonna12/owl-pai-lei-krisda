@@ -15,12 +15,14 @@ const productCategory = 'p.category';
 const productCatalogFrom = 'products p';
 const loginRoleFilter = '(u.is_seller OR u.is_buyer)';
 const app = express();
+if (process.env.RENDER) app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '9mb' }));
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; frame-ancestors 'none'");
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) return res.status(403).json({ error: 'Cross-origin request rejected' });
+  const expectedOrigin = process.env.RENDER_EXTERNAL_URL || `${req.protocol}://${req.headers.host}`;
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && req.headers.origin && req.headers.origin !== expectedOrigin) return res.status(403).json({ error: 'Cross-origin request rejected' });
   if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
   next();
 });
@@ -31,13 +33,13 @@ app.post('/api/login', async (req, res) => {
   if (!attempt || attempt.until < now) { attempt = { count: 0, until: now + 300000 }; attempts.set(key, attempt); }
   if (attempt.count >= 15) return res.status(429).json({ error: 'Too many attempts. Try again in five minutes.' });
   attempt.count++;
-  if (typeof req.body.email !== 'string' || typeof req.body.password !== 'string' || req.body.password.length > 200) return res.status(400).json({ error: 'Enter your email and password' });
+  if (typeof req.body?.email !== 'string' || typeof req.body?.password !== 'string' || !req.body.email.trim() || !req.body.password || req.body.password.length > 200) return res.status(400).json({ error: 'Enter your email and password' });
   const { rows } = await pool.query(`SELECT u.* FROM users u WHERE email=$1 AND status='active'
     AND ${loginRoleFilter}`, [req.body.email.trim().toLowerCase()]);
   const user = rows[0];
   if (!user || !verifyPassword(req.body.password, user.password_hash)) return res.status(401).json({ error: 'Email or password is incorrect, or this account is not active.' });
   const token = newToken(); await pool.query("INSERT INTO sessions(user_id,token_hash,expires_at) VALUES($1,$2,now()+interval '8 hours')", [user.user_id, tokenHash(token)]);
-  res.cookie('owl_session', token, { httpOnly: true, sameSite: 'strict', maxAge: 8 * 3600000, path: '/' });
+  res.cookie('owl_session', token, { httpOnly: true, secure: Boolean(process.env.RENDER), sameSite: 'strict', maxAge: 8 * 3600000, path: '/' });
   attempts.delete(key); res.json({ user: { name: user.full_name, email: user.email, canSell: user.seller_status === 'active' } });
 });
 app.post('/api/register', async (req, res) => {
@@ -51,6 +53,17 @@ app.post('/api/register', async (req, res) => {
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' });
   if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
   if (password.length > 200) return res.status(400).json({ error: 'Password must be 200 characters or fewer.' });
+
+  // Save an optional registration address in the same transaction as the account.
+  const addressKeys = ['recipientName', 'phone', 'addressLine', 'district', 'province', 'postalCode'];
+  const addressLimits = [100, 30, 500, 100, 100, 15];
+  let addressValues;
+  if (Object.hasOwn(body, 'address')) {
+    const address = body.address;
+    if (!address || typeof address !== 'object' || Array.isArray(address)) return res.status(400).json({ error: 'Enter valid home address details.' });
+    addressValues = addressKeys.map(key => typeof address[key] === 'string' ? address[key].trim() : '');
+    if (addressValues.some((value, i) => !value || value.length > addressLimits[i])) return res.status(400).json({ error: 'Enter valid home address details.' });
+  }
 
   const client = await pool.connect();
   try {
@@ -67,10 +80,15 @@ app.post('/api/register', async (req, res) => {
     }
 
     const user = rows[0];
+    if (addressValues) {
+      await client.query(`INSERT INTO addresses
+        (recipient_name,phone,address_line,district,province,postal_code,user_id,is_default)
+        VALUES($1,$2,$3,$4,$5,$6,$7,true)`, [...addressValues, user.user_id]);
+    }
     const token = newToken();
     await client.query("INSERT INTO sessions(user_id,token_hash,expires_at) VALUES($1,$2,now()+interval '8 hours')", [user.user_id, tokenHash(token)]);
     await client.query('COMMIT');
-    res.cookie('owl_session', token, { httpOnly: true, sameSite: 'strict', maxAge: 8 * 3600000, path: '/' });
+    res.cookie('owl_session', token, { httpOnly: true, secure: Boolean(process.env.RENDER), sameSite: 'strict', maxAge: 8 * 3600000, path: '/' });
     res.status(201).json({ user: { name: user.full_name, email: user.email, canSell: user.seller_status === 'active' } });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -244,7 +262,7 @@ app.use((err, req, res, next) => {
 });
 
 await pool.query('SELECT product_id FROM products LIMIT 1');
-const server = app.listen(Number(process.env.PORT || 3188), '127.0.0.1', () => {
+const server = app.listen(Number(process.env.PORT || 3188), process.env.RENDER ? '0.0.0.0' : '127.0.0.1', () => {
   console.log('Owl Seller Backend ready: http://127.0.0.1:' + Number(process.env.PORT || 3188));
 });
 function stop() { server.close(async () => { await pool.end(); process.exit(0); }); }
