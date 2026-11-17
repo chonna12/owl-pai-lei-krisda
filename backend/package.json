@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prestart": "node ../scripts/build.js",
     "start": "node --env-file=.env src/server.js",
-    "dev": "node --env-file=.env --watch src/server.js",
+    "dev": "node --env-file=.env --watch src/server.js --frontend-source",
     "db:setup": "node --env-file=.env scripts/setup-db.js",
     "db:catalog": "node --env-file=.env scripts/seed-catalog.js"
   },

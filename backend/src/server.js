@@ -4,6 +4,7 @@ import pg from 'pg';
 import { hashPassword, verifyPassword, newToken, tokenHash, readToken } from './security.js';
 import { validatePhotos, savePhotos } from './photos.js';
 import { fileURLToPath } from 'node:url';
+import { access } from 'node:fs/promises';
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -26,7 +27,11 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
   next();
 });
-app.use(express.static(fileURLToPath(new URL('../../frontend', import.meta.url))));
+// Development reads source files; normal starts and Render serve the built dist files.
+const frontendDirectory = fileURLToPath(new URL(process.argv.includes('--frontend-source') ? '../../frontend/' : '../../dist/', import.meta.url));
+try { await access(frontendDirectory + 'index.html'); }
+catch { throw new Error('Frontend build missing. Run npm run build before starting the server.'); }
+app.use(express.static(frontendDirectory));
 const attempts = new Map();
 app.post('/api/login', async (req, res) => {
   const key = req.ip, now = Date.now(); let attempt = attempts.get(key);
@@ -249,8 +254,6 @@ app.get('/api/health', async (req, res) => {
   await pool.query('SELECT 1');
   res.json({ status: 'ok', database: 'connected' });
 });
-
-app.get('/', (req, res) => res.json({ service: 'Owl Pai Lei Backend', health: '/api/health', catalog: '/api/products', frontendIncluded: false }));
 
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 app.use((err, req, res, next) => {

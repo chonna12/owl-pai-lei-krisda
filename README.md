@@ -11,6 +11,14 @@ The consolidated schema contains 21 tables. The API supports Buyer and Seller fl
 5. Run npm run db:setup once.
 6. Run npm start. The default API address is http://127.0.0.1:3188/api/health.
 
+## Frontend build
+
+Run `npm run build` to generate `dist/` from `frontend/`. The build checks JavaScript syntax, copies public files, and versions local asset URLs using content hashes so updates do not use stale browser files. It does not bundle or minify the source files.
+
+`npm start` builds automatically before starting the backend. The backend serves the generated `dist/` directory. Use `npm run dev` to serve editable source files directly while developing. Generated `dist/` files are not committed; each installation builds its own copy.
+
+On Render use Build Command `npm ci && npm run build` and Start Command `node backend/src/server.js`.
+
 ## Database files
 
 - `backend/database/schema.sql` defines the current 21 tables, constraints, views, triggers and workflow functions.
